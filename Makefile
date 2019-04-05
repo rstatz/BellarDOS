@@ -5,7 +5,7 @@ kernel = $(OS)/boot/kernel.bin
 
 linker_script = src/arch/x86_64/linker.ld
 grub_cfg = src/arch/x86_64/grub.cfg
-asm_obj_files = multiboot_header.o boot.o
+asm_obj_files = multiboot_header.o boot.o long_mode_init.o
 
 $(OS): $(kernel) $(grub_cfg)
 	dd if=/dev/zero of=$(OS).img bs=512 count=32768
