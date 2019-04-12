@@ -1,7 +1,8 @@
+#include <stddef.h>
 #include "strings.h"
 
 void* memset(void* dest, int c, size_t n) {
-    int i;
+    size_t i;
 
     for (i = 0; i < n; i++) {
         ((char*)dest)[i] = c;
@@ -11,7 +12,7 @@ void* memset(void* dest, int c, size_t n) {
 }
 
 void* memcpy(void* dest, const void* src, size_t n) {
-    int i;
+    size_t i;
 
     for (i = 0; i < n; i++) {
         ((char*)dest)[i] = ((char*)src)[i];
@@ -21,48 +22,48 @@ void* memcpy(void* dest, const void* src, size_t n) {
 }
 
 size_t strlen(const char* s) {
-    size_t c = 0;
+    size_t i = 0;
 
     while(s[0] != '\0') {
-        c++;
+        i++;
     }
     
-    return c;
+    return i;
 }
 
 char* strcpy(char* dest, const char* src) {
-    int c = 0;
+    int i = 0;
 
-    while (src[c] != '\0') {
-        dest[c] = src[c];
-        c++;
+    while (src[i] != '\0') {
+        dest[i] = src[i];
+        i++;
     }
 
-    dest[c] = '\0';
+    dest[i] = '\0';
 
     return dest;
 }
 
 int strcmp(const char* s1, const char* s2) {
-    int c = 0;
+    int i = 0;
 
-    while(s1[c]) {
-        if (s1[c] != s2[c])
+    while(s1[i]) {
+        if (s1[i] != s2[i])
             break;
         
-        c++;
+        i++;
     }
 
-    return ((unsigned char*)s1)[c] - ((unsigned char *)s2)[c];
+    return ((unsigned char*)s1)[i] - ((unsigned char *)s2)[i];
 }
 
 const char* strchr(const char* s, int c) {
-    int c = 0;
+    int i = 0;
 
-    while (s[c] != '\0') {
-        if (s[c] == c)
-            return &s[c];
-        c++;
+    while (s[i] != '\0') {
+        if (s[i] == c)
+            return &s[i];
+        i++;
     }
 
     return NULL;

@@ -1,11 +1,20 @@
-OS = StatzOS
-mpoint = fatgrub
-arch ?= x86_64
-kernel = $(OS)/boot/kernel.bin
+OS=StatzOS
+mpoint=fatgrub
+arch ?=x86_64
+path=src/arch/$(arch)
+kernel=$(OS)/boot/kernel.bin
 
-linker_script = src/arch/x86_64/linker.ld
-grub_cfg = src/arch/x86_64/grub.cfg
-asm_obj_files = multiboot_header.o boot.o long_mode_init.o
+CC=x86_64-elf-gcc
+CCLINKER=x86_64-elf-ld
+
+linker_script=$(path)/linker.ld
+grub_cfg=$(path)/grub.cfg
+
+C_FLAGS=-ffreestanding -mno-red-zone -Wall -Wextra -g -c
+
+C_FILES=$(wildcard $(path)/*.c)
+C_OBJ=kmain.o vga_cd.o strings.o math.o print.o
+ASM_OBJ=multiboot_header.o boot.o long_mode_init.o
 
 $(OS): $(kernel) $(grub_cfg)
 	dd if=/dev/zero of=$(OS).img bs=512 count=32768
@@ -21,15 +30,20 @@ $(OS): $(kernel) $(grub_cfg)
 	sudo umount /mnt/$(mpoint)	
 	sudo losetup -d /dev/loop9878
 	sudo losetup -d /dev/loop9879
-	rm -r $(OS)
+	rm *.o
 
 run: $(OS).img
 	qemu-system-x86_64 -s -drive format=raw,file=$(OS).img -serial stdio
 
-$(kernel): $(asm_obj_files) $(linker_script)
+$(kernel): $(ASM_OBJ) $(linker_script) $(C_FILES)
 	mkdir -p $(OS)/boot/grub
 	cp $(grub_cfg) $(OS)/boot/grub/grub.cfg
-	ld -n -T $(linker_script) -o $(kernel) $(asm_obj_files)
+	$(CC) -o math.o $(C_FLAGS) $(path)/math.c
+	$(CC) -o print.o $(C_FLAGS) $(path)/print.c
+	$(CC) -o strings.o $(C_FLAGS) $(path)/strings.c
+	$(CC) -o vga_cd.o $(C_FLAGS) $(path)/vga_cd.c
+	$(CC) -o kmain.o $(C_FLAGS) $(path)/kmain.c
+	$(CCLINKER) -n -T $(linker_script) -o $(kernel) $(ASM_OBJ) $(C_OBJ)
 
 %.o: src/arch/$(arch)/%.asm
 	nasm -f elf64 $< -o $@
@@ -38,4 +52,5 @@ $(kernel): $(asm_obj_files) $(linker_script)
 
 clean:
 	rm *.img
-	rm *.o
+	rm -r $(OS)
+

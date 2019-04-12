@@ -8,9 +8,9 @@ void VGA_init();
 void VGA_clear();
 
 // Displays character
-void VGA_display_char(char c);
+void VGA_display_char(char);
 
 // Displays string
-void VGA_display_str(const char* str);
+void VGA_display_str(const unsigned char*);
 
 #endif

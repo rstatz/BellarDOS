@@ -20,11 +20,11 @@ static int width = 80;
 static int height = 25;
 
 static int cursor = 0;
-static char color = 0;
+static unsigned char color = 0;
 
 static unsigned short* vgaBuff = (unsigned short*)VGA_BASE;
 
-void VGA_set_color(unsigned char fg, unsigned char bg) {
+void VGA_set_color(char fg, char bg) {
     color = fg | (bg << 4);
 }
 
@@ -34,7 +34,7 @@ void VGA_clear() {
 
     for (r = 0; r < height; r++) {
         for (c = 0; c < width; c++) {
-            block = r * c;
+            block = (r * width) + c;
             vgaBuff[block] = VGA_ENTRY(color, (unsigned char)' ');
         }
     }
@@ -52,26 +52,31 @@ void scroll() {
 
     for (r = 0; r < height - 1; r++) {
         for (c = 0; c < width; c++) {
-            block = (r * c);
+            block = (r * width) + c;
             next_line = block + width;
             vgaBuff[block] = vgaBuff[next_line];
         }
     }
 
-    block = (width * height) - 1;
+    block = (width * (height - 1));
 
     for (c = 0; c < width; c++) {
         vgaBuff[block] = VGA_ENTRY(color, (unsigned char)' ');
+        block++;
     }
+
+    cursor -= width;
 }
 
 void VGA_display_char(char c) {
     // Different support for carriage return?
-    if (c == '\n' | c == '\r') {
+    if ((c == '\n') | (c == '\r')) {
         cursor = ((cursor / width) + 1) * width;
 
-        if (cursor >= width*height)
+        if (cursor >= width*height) {
             scroll();
+            vgaBuff[cursor] = VGA_ENTRY(color, c);
+        }
     }
     else {
         vgaBuff[cursor] = VGA_ENTRY(color, c);
