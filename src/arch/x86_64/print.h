@@ -20,6 +20,5 @@ void print_longx(long);
 void print_pointer(void*);
 
 // Must support: %% %d %u %x %c %p %h[dux] %l[dux] %q[dux] %s
-void printk(const char*, ...);
-
+int printk(const char*, ...) __attribute__ ((format (printf, 1, 2)));
 #endif

@@ -16,6 +16,8 @@ C_FILES=$(wildcard $(path)/*.c)
 C_OBJ=kmain.o vga_cd.o strings.o math.o print.o
 ASM_OBJ=multiboot_header.o boot.o long_mode_init.o
 
+LIBS= -nostdlib -lgcc
+
 $(OS): $(kernel) $(grub_cfg)
 	dd if=/dev/zero of=$(OS).img bs=512 count=32768
 	parted $(OS).img mklabel msdos
@@ -38,11 +40,11 @@ run: $(OS).img
 $(kernel): $(ASM_OBJ) $(linker_script) $(C_FILES)
 	mkdir -p $(OS)/boot/grub
 	cp $(grub_cfg) $(OS)/boot/grub/grub.cfg
-	$(CC) -o math.o $(C_FLAGS) $(path)/math.c
-	$(CC) -o print.o $(C_FLAGS) $(path)/print.c
-	$(CC) -o strings.o $(C_FLAGS) $(path)/strings.c
-	$(CC) -o vga_cd.o $(C_FLAGS) $(path)/vga_cd.c
-	$(CC) -o kmain.o $(C_FLAGS) $(path)/kmain.c
+	$(CC) -o math.o $(C_FLAGS) $(path)/math.c $(LIBS)
+	$(CC) -o print.o $(C_FLAGS) $(path)/print.c $(LIBS)
+	$(CC) -o strings.o $(C_FLAGS) $(path)/strings.c $(LIBS)
+	$(CC) -o vga_cd.o $(C_FLAGS) $(path)/vga_cd.c $(LIBS)
+	$(CC) -o kmain.o $(C_FLAGS) $(path)/kmain.c $(LIBS)
 	$(CCLINKER) -n -T $(linker_script) -o $(kernel) $(ASM_OBJ) $(C_OBJ)
 
 %.o: src/arch/$(arch)/%.asm

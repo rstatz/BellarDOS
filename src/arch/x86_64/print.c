@@ -1,4 +1,5 @@
 #include <stdint.h>
+#include <stdarg.h>
 #include "print.h"
 #include "vga_cd.h"
 #include "math.h"
@@ -52,7 +53,7 @@ void print_short(short s) {
             print_char(c);
             z_ignore = 0;
         }
-        else if (i == (SHORT_MXDGTS - 1))
+        else if (i == SHORT_MXDGTS)
             print_char(c);
     }
 }
@@ -76,7 +77,7 @@ void print_int(int d) {
             print_char(c);
             z_ignore = 0;
         }
-        else if (i == (INT_MXDGTS - 1))
+        else if (i == INT_MXDGTS)
             print_char(c);
     }
 }
@@ -100,7 +101,7 @@ void print_quad(long long q) {
             print_char(c);
             z_ignore = 0;
         }
-        else if (i == (QUAD_MXDGTS - 1))
+        else if (i == QUAD_MXDGTS)
             print_char(c);
     }
 }
@@ -179,5 +180,133 @@ void print_quadx(long long q) {
 // %p
 void print_pointer(void* p) {
     print_x((long)p, PTR_MXDGTS_HX);
+}
+
+char* parse_h(va_list args, char* s) {
+    short h;
+    
+    switch(*(s + 1)) {
+        case('d') : h = (short)va_arg(args, int);
+                    print_short(h);
+                    return ++s;
+
+        case('u') : h = (short)va_arg(args, int);
+                    print_ushort((unsigned short)h);
+                    return ++s;
+
+        case('x') : h = (short)va_arg(args, int);
+                    print_shortx(h);
+                    return ++s;
+
+        default : h = (short)va_arg(args, int);
+                  print_short(h);
+                  return s;
+    }
+}
+
+char* parse_l(va_list args, char* s) {
+    long l;
+
+    switch(*(s + 1)) {
+        case('d') : l = va_arg(args, long);
+                    print_int((int)l);
+                    return ++s;
+
+        case('u') : l = va_arg(args, long);
+                    print_ulong((unsigned long)l);
+                    return ++s;
+
+        case('x') : l = va_arg(args, long);
+                    print_longx(l);
+                    return ++s;
+
+        default : l = va_arg(args, long);
+                  print_int((int)l);
+                  return s;
+    }
+}
+
+char* parse_q(va_list args, char* s) {
+    long long q;
+
+    switch(*(s + 1)) {
+        case('d') : q = va_arg(args, long long);
+                    print_quad(q);
+                    return ++s;
+
+        case('u') : q = va_arg(args, long long);
+                    print_uquad((unsigned long long)q);
+                    return ++s;
+
+        case('x') : q = va_arg(args, long long);
+                    print_quadx(q);
+                    return ++s;
+
+        default : q = va_arg(args, long long);
+                  print_int(q);
+                  return s;
+    }
+}
+
+int printk(const char* fmt, ...) {
+    char* s = (char*)fmt;
+    long long d;
+    va_list args;
+    va_start(args, fmt);
+    
+    while (*s != '\0') {
+        if (*s == '%') {
+            s++;
+            
+            switch(*s) {
+                case('%') : print_char('%');
+                            break;
+                
+                case('d') : d = va_arg(args, int);
+                            print_int((int)d);
+                            break;
+                
+                case('u') : d = va_arg(args, unsigned int);
+                            print_uint((unsigned int)d);
+                            break;
+
+                case('x') : d = va_arg(args, int);
+                            print_intx((int)d);
+                            break;
+    
+                case('c') : d = (long long)va_arg(args, int);
+                            print_char((char)d);
+                            break;
+
+                case('p') : d = (long long)va_arg(args, void*);
+                            print_pointer((void*)d);
+                            break;
+
+                case('s') : d = (long long)va_arg(args, char*);
+                            print_str((char*)d);
+                            break;
+
+                case('h') : s = parse_h(args, s);
+                            break;
+
+                case('l') : s = parse_l(args, s);
+                            break;
+
+                case('q') : s = parse_q(args, s);
+                            break;
+
+                default: print_str("\nError: bad format specifier\n");
+                         return -1;
+            }
+        }
+        else
+            print_char(*s);
+        
+        s++;
+    }
+
+    va_end(args);
+
+    return 0;
 }
 
