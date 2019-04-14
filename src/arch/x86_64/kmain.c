@@ -1,5 +1,6 @@
 #include "strings.h"
 #include "vga_cd.h"
+#include "ps2_cd.h"
 #include "print.h"
 
 void kmain() {    
@@ -25,7 +26,9 @@ void kmain() {
     printk("\n Testing %s with %d %crgs, which is %hx in hex %qx", "printk", 5, 'a', (short)5, (unsigned long long)8446744073709551615);
 
     VGA_display_str((unsigned char*)"\n\n\n");
-    VGA_display_str((unsigned char*)"DOWN HERE\n HEYO\n\n\n\n\n\nLAST\nSCROLL");
+    VGA_display_str((unsigned char*)"DOWN HERE\n HEYO\n\n\n\n\n\nLAST\nSCROLL\n");
+
+    ps2_init();
 
     while(1) {
         asm("hlt");
