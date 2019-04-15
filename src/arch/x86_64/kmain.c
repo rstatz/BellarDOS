@@ -21,7 +21,7 @@ void kmain() {
     print_char('\n');
     print_uint(4000000000);
     print_char('\n');
-    print_longx(0x89abcdef);
+    printk("%x", 0xBB);
 
     printk("\n Testing %s with %d %crgs, which is %hx in hex %qx", "printk", 5, 'a', (short)5, (unsigned long long)8446744073709551615);
 

@@ -1,5 +1,6 @@
 #include "ps2_cd.h"
 #include "print.h"
+#include "io.h"
 
 // Ports
 #define PS2_CMD_REG 0x64
@@ -15,9 +16,7 @@
 
 // Status
 #define ISTATUS_MASK 0x02
-#define ISTATUS (ISTATUS_MASK & *ps2_cmd)
 #define OSTATUS_MASK 0x01
-#define OSTATUS (OSTATUS_MASK & *ps2_cmd)
 
 #define IRQ_BITS 0x03
 #define TRANS_BIT 0x40
@@ -37,29 +36,26 @@
 #define ENABLE_KEYBOARD 0xF4
 #define DISABLE_KEYBOARD 0xF5
 
-static char* ps2_cmd = (char*)PS2_CMD_REG;
-static char* ps2_data = (char*)PS2_DATA_REG;
-
-void ps2_poll_write(char c) {
-    while (!ISTATUS);
-    *ps2_cmd = c;
+void ps2_poll_write(unsigned char c) {
+    while (inb(PS2_CMD_REG) & ISTATUS_MASK);
+    outb(c, PS2_CMD_REG);
 }
 
 void ps2_poll_write2(char c1, char c2) {
-    while (!ISTATUS);
-    *ps2_cmd = c1;
-    *ps2_data = c2; 
+    while (inb(PS2_CMD_REG) & ISTATUS_MASK);
+    outb(c1, PS2_CMD_REG);
+    outb(c2, PS2_DATA_REG);
 }
 
-char ps2_poll_read() {
-    while (!OSTATUS);
-    return *ps2_data;
+unsigned char ps2_poll_read() {
+    while (!(inb(PS2_CMD_REG) & OSTATUS_MASK));
+    return inb(PS2_DATA_REG);
 }
 
 void ps2_poll_keyboard() {
     while (1) {
-        if (ps2_poll_read() == (char)0x13) {
-            if (ps2_poll_read() == (char)0x93)
+        if (ps2_poll_read() == 0x13) {
+            if (ps2_poll_read() == 0x93)
                 printk("R");
         }
     } 
@@ -72,7 +68,7 @@ void ps2_flush_out() {
 void ps2_keyboard_init() {
     // Reset keyboard
     ps2_poll_write(KB_RESET);
-    if (ps2_poll_read() != (char)CONFIRM_RESET)
+    if (ps2_poll_read() != CONFIRM_RESET)
         printk("Error: Keyboard not reset\n");
 
     // Set Scancode
@@ -87,12 +83,16 @@ void ps2_keyboard_init() {
 
 void ps2_init() {
     char status;
-    printk("ps2: Initializing...");
+    printk("ps2: Initializing...\n");
     // Disable Ports
+     
     ps2_poll_write(DISABLE_PORT1);
+   
+    printk("ps2: Disabled port 1\n");
+ 
     ps2_poll_write(DISABLE_PORT2);
     
-    printk("ps2: Disabled ports\n");
+    printk("ps2: Disabled port 2\n");
     //ps2_flush_out();
 
     // Set Config
@@ -117,3 +117,4 @@ void ps2_init() {
 
     ps2_poll_keyboard();
 }
+
