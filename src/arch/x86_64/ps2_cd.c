@@ -79,6 +79,7 @@ void ps2_keyboard_init() {
 
     // Enable Keyboard
     ps2_poll_write(ENABLE_KEYBOARD);
+    printk("ps2: Keyboard Enabled\n");
 }
 
 void ps2_init() {
@@ -109,12 +110,11 @@ void ps2_init() {
         printk("Error: ps2 controller not configured properly\n");
         return;
     }
+    printk("ps2: Configuration Passed\n");
 
     ps2_keyboard_init();
 
     ps2_poll_write(ENABLE_PORT1);
     //ps2_poll_write(ENABLE_PORT2);
-
-    ps2_poll_keyboard();
 }
 

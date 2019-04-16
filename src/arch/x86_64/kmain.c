@@ -31,6 +31,7 @@ void kmain() {
     ps2_init();
 
     while(1) {
-        asm("hlt");
+        ps2_poll_keyboard();
+        //asm("hlt");
     }
 }
