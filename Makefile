@@ -56,4 +56,6 @@ $(kernel): $(ASM_OBJ) $(linker_script) $(C_FILES)
 clean:
 	rm *.img
 	rm -r $(OS)
+	sudo losetup --detach /dev/loop9878
+	sudo losetup --detach /dev/loop9879
 
