@@ -2,17 +2,9 @@
 #include <stddef.h>
 
 #include "strings.h"
+#include "vga_cd.h"
 
 #define VGA_BASE 0xb8000
-
-#define VGA_COLOR_BLACK 0x00
-#define VGA_COLOR_BLUE 0x01
-#define VGA_COLOR_GREEN 0x02
-#define VGA_COLOR_CYAN 0x03
-#define VGA_COLOR_RED 0x04
-#define VGA_COLOR_MAGENTA 0x05
-#define VGA_COLOR_BROWN 0x06
-#define VGA_COLOR_LIGHT_GREY 0x07
 
 #define VGA_ENTRY(H, C) ((H << 8) | C)
 
@@ -40,6 +32,7 @@ void VGA_clear() {
             vgaBuff[block] = VGA_ENTRY(color, (unsigned char)' ');
         }
     }
+    cursor = 0;
 }
 
 void VGA_init() {
@@ -70,7 +63,7 @@ void scroll() {
     cursor -= width;
 }
 
-void VGA_display_char(char c) {
+void VGA_display_char(unsigned char c) {
     // Different support for carriage return?
     if (cursor >= width*height)
         scroll();
@@ -87,8 +80,8 @@ void VGA_display_char(char c) {
     }
 }
 
-void VGA_display_str(char* str) {
-    char* p = str;
+void VGA_display_str(unsigned char* str) {
+    unsigned char* p = str;
 
     while (*p != '\0') {
         VGA_display_char(*p);

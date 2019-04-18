@@ -2,6 +2,7 @@
 #include "vga_cd.h"
 #include "ps2_cd.h"
 #include "print.h"
+#include "splash.h"
 
 void kmain() {    
 
@@ -28,8 +29,12 @@ void kmain() {
     VGA_display_str((unsigned char*)"\n\n\n");
     //VGA_display_str((unsigned char*)"DOWN HERE\n HEYO\n\n\n\n\n\nLAST\nSCROLL\n");
 
-    ps2_init();
+    splash();
 
+    while(1);
+
+    ps2_init();
+    
     while(1) {
         ps2_poll_keyboard();
         //asm("hlt");

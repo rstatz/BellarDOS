@@ -27,7 +27,7 @@ void print_char(char c) {
 
 // %s
 void print_str(const char* str) {
-    VGA_display_str((const unsigned char*)str);
+    VGA_display_str((unsigned char*)str);
 }
 
 void print_uchar(unsigned char c) {
