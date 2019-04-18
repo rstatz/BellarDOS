@@ -2,6 +2,9 @@
 #include "print.h"
 #include "io.h"
 
+#define WELCOME "*Welcome to BellarDOS*\n"
+#define POLL_PROMPT "> "
+
 // Ports
 #define PS2_CMD_REG 0x64
 #define PS2_DATA_REG 0x60
@@ -49,16 +52,13 @@
 #define LSHIFT_OUT 0xAA
 
 #define ASCII_BS 0x08
-#define ASCII_SHIFT_OUT 0x0E
-#define ASCII_SHIFT_IN 0x0F
-#define ASCII_CAPS 0x11
 
 static uint8_t shift = 0;
 static uint8_t caps = 0;
-static uint8_t sc_s1[256] = {0, 0, '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-', '=', ASCII_BS, '\t', 'q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p', '[', ']', '\n', 0, 'a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l', ';', '\'', '`', ASCII_SHIFT_IN, '\\', 'z', 'x', 'c', 'v', 'b', 'n', 'm', ',', '.', '/', ASCII_SHIFT_IN, '*', 0, ' ', ASCII_CAPS, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 /*numlock*/, 0, '7', '8', '9', '-', '4', '5', '6', '+', '1', '2', '3', '0', '.', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, ASCII_SHIFT_OUT, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, ASCII_SHIFT_OUT, 0};
-static uint8_t sc_s1_caps[256] = {0, 0, '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-', '=', ASCII_BS, '\t', 'Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P', '[', ']', '\n', 0, 'A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L', ';', '\'', '`', ASCII_SHIFT_IN, '\\', 'Z', 'X', 'C', 'V', 'B', 'N', 'M', ',', '.', '/', ASCII_SHIFT_IN, '*', 0, ' ', ASCII_CAPS, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 /*numlock*/, 0, '7', '8', '9', '-', '4', '5', '6', '+', '1', '2', '3', '0', '.', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, ASCII_SHIFT_OUT, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, ASCII_SHIFT_OUT, 0};
-static uint8_t sc_s1_shift[256] = {0, 0, '!', '@', '#', '$', '%', '^', '&', '*', '(', ')', '_', '+', ASCII_BS, '\t', 'Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P', '{', '}', '\n', 0, 'A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L', ':', '\"', '~', ASCII_SHIFT_IN, '|', 'Z', 'X', 'C', 'V', 'B', 'N', 'M', '<', '>', '?', ASCII_SHIFT_IN, '*', 0, ' ', ASCII_CAPS, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 /*numlock*/, 0, '7', '8', '9', '-', '4', '5', '6', '+', '1', '2', '3', '0', '.', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, ASCII_SHIFT_OUT, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, ASCII_SHIFT_OUT, 0};
-static uint8_t sc_s1_shift_caps[256] = {0, 0, '!', '@', '#', '$', '%', '^', '&', '*', '(', ')', '_', '+', ASCII_BS, '\t', 'q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p', '{', '}', '\n', 0, 'a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l', ':', '\"', '~', ASCII_SHIFT_IN, '|', 'z', 'x', 'c', 'v', 'b', 'n', 'm', '<', '>', '?', ASCII_SHIFT_IN, '*', 0, ' ', ASCII_CAPS, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 /*numlock*/, 0, '7', '8', '9', '-', '4', '5', '6', '+', '1', '2', '3', '0', '.', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, ASCII_SHIFT_OUT, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, ASCII_SHIFT_OUT, 0};
+static uint8_t sc_s1[256] = {0, 0, '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-', '=', ASCII_BS, '\t', 'q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p', '[', ']', '\n', 0, 'a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l', ';', '\'', '`', 0, '\\', 'z', 'x', 'c', 'v', 'b', 'n', 'm', ',', '.', '/', 0, '*', 0, ' ', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 /*numlock*/, 0, '7', '8', '9', '-', '4', '5', '6', '+', '1', '2', '3', '0', '.', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+static uint8_t sc_s1_caps[256] = {0, 0, '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-', '=', ASCII_BS, '\t', 'Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P', '[', ']', '\n', 0, 'A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L', ';', '\'', '`', 0, '\\', 'Z', 'X', 'C', 'V', 'B', 'N', 'M', ',', '.', '/', 0, '*', 0, ' ', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 /*numlock*/, 0, '7', '8', '9', '-', '4', '5', '6', '+', '1', '2', '3', '0', '.', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+static uint8_t sc_s1_shift[256] = {0, 0, '!', '@', '#', '$', '%', '^', '&', '*', '(', ')', '_', '+', ASCII_BS, '\t', 'Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P', '{', '}', '\n', 0, 'A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L', ':', '\"', '~', 0, '|', 'Z', 'X', 'C', 'V', 'B', 'N', 'M', '<', '>', '?', 0, '*', 0, ' ', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 /*numlock*/, 0, '7', '8', '9', '-', '4', '5', '6', '+', '1', '2', '3', '0', '.', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+static uint8_t sc_s1_shift_caps[256] = {0, 0, '!', '@', '#', '$', '%', '^', '&', '*', '(', ')', '_', '+', ASCII_BS, '\t', 'q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p', '{', '}', '\n', 0, 'a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l', ':', '\"', '~', 0, '|', 'z', 'x', 'c', 'v', 'b', 'n', 'm', '<', '>', '?', 0, '*', 0, ' ', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 /*numlock*/, 0, '7', '8', '9', '-', '4', '5', '6', '+', '1', '2', '3', '0', '.', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 
 static uint8_t* charset = sc_s1;
 
@@ -101,6 +101,9 @@ void set_charset() {
 
 void ps2_poll_keyboard() {
     uint8_t c;
+    
+    printk(WELCOME);
+    printk(POLL_PROMPT);
 
     while (1) {
         c = ps2_poll_read();
@@ -143,7 +146,12 @@ void ps2_poll_keyboard() {
             default:
                 if ((c = charset[c]) == 0)
                     break;
+                
                 printk("%c", c);
+
+                if (c == '\n' || c == '\r')
+                    printk(POLL_PROMPT);
+
                 break;
         }
     }
@@ -167,41 +175,41 @@ void ps2_set_config() {
     ps2_poll_write(READ_CONFIG); 
     config = ps2_poll_read();
     
-    printk("ps2: Config=%x\n", config);
+    //printk("ps2: Config=%x\n", config);
     
     config |= CLOCK_PORT2;
     config &= ~(IRQ_BITS | TRANS_BIT | CLOCK_PORT1); // Translation?
   
-    printk("ps2: Writing status %x\n", config);
+    //printk("ps2: Writing status %x\n", config);
  
     ps2_poll_write2(SET_CONFIG, config);
 }
 
 void ps2_poll_keyboard_reset() {
-    uint8_t status;
+    //uint8_t status;
 
     ps2_poll_write_dev(KB_RESET);    
-    printk("ps2: Keyboard Reset Sent...\n");
+    //printk("ps2: Keyboard Reset Sent...\n");
     
     if (!ps2_ack())
         printk("ps2: Keyboard reset failed\n");
 
-    if ((status = ps2_poll_read()) == CONFIRM_RESET)
-        printk("ps2: Keyboard reset\n");
-    else
-        printk("ps2: Keyboard reset failed\n");
+    //if ((status = ps2_poll_read()) == CONFIRM_RESET)
+    //    printk("ps2: Keyboard reset\n");
+    //else
+    //    printk("ps2: Keyboard reset failed\n");
 }
 
 void ps2_set_scancode() {
-    printk("ps2: Setting Scancode\n");   
+    //printk("ps2: Setting Scancode\n");   
 
     ps2_poll_write_dev(SET_SCANCODE);
-    if(!ps2_ack())
-        printk("Error: Scan code not set\n");
+    if(!ps2_ack()) {}
+        //printk("Error: Scan code not set\n");
     
     ps2_poll_write_dev(SCANCODE_1);
-    if(!ps2_ack())
-        printk("Error: Scan code not set\n");
+    if(!ps2_ack()) {}
+        //printk("Error: Scan code not set\n");
 }
 
 void ps2_keyboard_init() {
@@ -213,8 +221,8 @@ void ps2_keyboard_init() {
 
     // Enable Keyboard
     ps2_poll_write_dev(ENABLE_KEYBOARD);
-    if (ps2_ack())
-        printk("ps2: Keyboard Enabled\n");
+    //if (ps2_ack())
+    //    printk("ps2: Keyboard Enabled\n");
 }
 
 void ps2_self_test() {
@@ -225,21 +233,21 @@ void ps2_self_test() {
         return;
     }
 
-    ps2_poll_write(0xAB);
+    //ps2_poll_write(0xAB);
 
-    if (ps2_poll_read() == 0x00)
-        printk("ps2: Port 1 passes\n");
+    //if (ps2_poll_read() == 0x00)
+    //    printk("ps2: Port 1 passes\n");
 }
 
 void ps2_init() {
-    printk("ps2: Initializing...\n");
+    //printk("ps2: Initializing...\n");
     
     // Disable Ports
     ps2_poll_write(DISABLE_PORT1);
-    printk("ps2: Disabled port 1\n");
+    //printk("ps2: Disabled port 1\n");
  
     ps2_poll_write(DISABLE_PORT2);    
-    printk("ps2: Disabled port 2\n");
+    //printk("ps2: Disabled port 2\n");
     
     // test controller 
     ps2_self_test();
@@ -250,11 +258,11 @@ void ps2_init() {
     // Set Config
     ps2_set_config();
     
-    printk("ps2: Configured Controller\n");
+    //printk("ps2: Configured Controller\n");
 
     ps2_poll_write(ENABLE_PORT1);
         
-    printk("ps2: Port 1 Enabled\n");
+    //printk("ps2: Port 1 Enabled\n");
 
     ps2_keyboard_init();
     

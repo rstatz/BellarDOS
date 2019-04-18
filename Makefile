@@ -1,4 +1,4 @@
-OS=StatzOS
+OS=BellarDOS
 mpoint=fatgrub
 arch ?=x86_64
 path=src/arch/$(arch)

@@ -12,7 +12,7 @@
 #define VGA_COLOR_WHITE 0x0F
 
 // Initializes Display
-void VGA_init();
+void VGA_init(char, char);
 
 // Clears screen
 void VGA_clear();

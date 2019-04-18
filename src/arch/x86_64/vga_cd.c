@@ -35,8 +35,8 @@ void VGA_clear() {
     cursor = 0;
 }
 
-void VGA_init() {
-    VGA_set_color(VGA_COLOR_CYAN, VGA_COLOR_RED);
+void VGA_init(char fg, char bg) {
+    VGA_set_color(fg, bg);
 
     VGA_clear();
 }

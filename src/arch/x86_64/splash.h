@@ -3,4 +3,6 @@
 
 void splash();
 
+void splash_end();
+
 #endif
