@@ -24,11 +24,14 @@
 #define CLOCK_PORT2 0x20
 #define SELF_TEST_SUCCESS 0x55
 #define SCANCODE_1 0x01
+#define SCANCODE_2 0x02
 #define PS2_ACK 0xFA
 #define PS2_ECHO 0xEE
 #define CONFIRM_SC_1 0x43
 #define CONFIRM_RESET 0xAA
 #define RESEND 0xFE
+#define PS2_TWOBYTE 0xE0
+#define PS2_TRIBYTE 0xE1
 
 // Commands
 #define KB_RESET 0xFF
@@ -39,7 +42,25 @@
 #define ENABLE_KEYBOARD 0xF4
 #define DISABLE_KEYBOARD 0xF5
 
-static uint8_t sc_s2[132] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, '\t', '`', 0, 0, 0, 0, 0, 'q', '1', 0, 0, 0, 'z', 's', 'a', 'w', '2', 0, 0, 'c', 'x', 'd', 'e', '4', '3', 0, 0, ' ', 'v', 'f', 't', 'r', '5', 0, 0, 'n', 'b', 'h', 'g', 'y', '6', 0, 0, 0, 'm', 'j', 'u', '7', '8', 0, 0, ',', 'k', 'i', 'o', '0', '9', 0, 0, '.', '/', 'l', ';', 'p', '-', 0, 0, 0, '\'', 0, '[', '=', 0, 0, 0 /*caps*/, 0, '\n', ']', 0, '\\', 0, 0, 0, 0, 0, 0, 0, 0,0x08, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+#define CAPS_IN 0x3A
+#define RSHIFT_IN 0x36
+#define RSHIFT_OUT 0xB6
+#define LSHIFT_IN 0x2A
+#define LSHIFT_OUT 0xAA
+
+#define ASCII_BS 0x08
+#define ASCII_SHIFT_OUT 0x0E
+#define ASCII_SHIFT_IN 0x0F
+#define ASCII_CAPS 0x11
+
+static uint8_t shift = 0;
+static uint8_t caps = 0;
+static uint8_t sc_s1[256] = {0, 0, '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-', '=', ASCII_BS, '\t', 'q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p', '[', ']', '\n', 0, 'a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l', ';', '\'', '`', ASCII_SHIFT_IN, '\\', 'z', 'x', 'c', 'v', 'b', 'n', 'm', ',', '.', '/', ASCII_SHIFT_IN, '*', 0, ' ', ASCII_CAPS, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 /*numlock*/, 0, '7', '8', '9', '-', '4', '5', '6', '+', '1', '2', '3', '0', '.', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, ASCII_SHIFT_OUT, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, ASCII_SHIFT_OUT, 0};
+static uint8_t sc_s1_caps[256] = {0, 0, '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-', '=', ASCII_BS, '\t', 'Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P', '[', ']', '\n', 0, 'A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L', ';', '\'', '`', ASCII_SHIFT_IN, '\\', 'Z', 'X', 'C', 'V', 'B', 'N', 'M', ',', '.', '/', ASCII_SHIFT_IN, '*', 0, ' ', ASCII_CAPS, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 /*numlock*/, 0, '7', '8', '9', '-', '4', '5', '6', '+', '1', '2', '3', '0', '.', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, ASCII_SHIFT_OUT, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, ASCII_SHIFT_OUT, 0};
+static uint8_t sc_s1_shift[256] = {0, 0, '!', '@', '#', '$', '%', '^', '&', '*', '(', ')', '_', '+', ASCII_BS, '\t', 'Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P', '{', '}', '\n', 0, 'A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L', ':', '\"', '~', ASCII_SHIFT_IN, '|', 'Z', 'X', 'C', 'V', 'B', 'N', 'M', '<', '>', '?', ASCII_SHIFT_IN, '*', 0, ' ', ASCII_CAPS, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 /*numlock*/, 0, '7', '8', '9', '-', '4', '5', '6', '+', '1', '2', '3', '0', '.', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, ASCII_SHIFT_OUT, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, ASCII_SHIFT_OUT, 0};
+static uint8_t sc_s1_shift_caps[256] = {0, 0, '!', '@', '#', '$', '%', '^', '&', '*', '(', ')', '_', '+', ASCII_BS, '\t', 'q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p', '{', '}', '\n', 0, 'a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l', ':', '\"', '~', ASCII_SHIFT_IN, '|', 'z', 'x', 'c', 'v', 'b', 'n', 'm', '<', '>', '?', ASCII_SHIFT_IN, '*', 0, ' ', ASCII_CAPS, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 /*numlock*/, 0, '7', '8', '9', '-', '4', '5', '6', '+', '1', '2', '3', '0', '.', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, ASCII_SHIFT_OUT, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, ASCII_SHIFT_OUT, 0};
+
+static uint8_t* charset = sc_s1;
 
 void ps2_poll_write(uint8_t c) {
     while (inb(PS2_CMD_REG) & ISTATUS_MASK);
@@ -49,6 +70,12 @@ void ps2_poll_write(uint8_t c) {
 void ps2_poll_write2(uint8_t cmd, uint8_t data) {
     while (inb(PS2_CMD_REG) & ISTATUS_MASK);
     outb(cmd, PS2_CMD_REG);
+    while (inb(PS2_CMD_REG) & ISTATUS_MASK);
+    outb(data, PS2_DATA_REG);
+}
+
+void ps2_poll_write_dev(uint8_t data) {
+    while (inb(PS2_CMD_REG) & ISTATUS_MASK);
     outb(data, PS2_DATA_REG);
 }
 
@@ -61,13 +88,65 @@ uint8_t ps2_poll_read() {
     return inb(PS2_DATA_REG);
 }
 
+void set_charset() {
+    if (caps && shift)
+        charset = sc_s1_shift_caps;
+    else if (caps)
+        charset = sc_s1_caps;
+    else if (shift)
+        charset = sc_s1_shift;
+    else
+        charset = sc_s1;
+}
+
 void ps2_poll_keyboard() {
     uint8_t c;
 
     while (1) {
         c = ps2_poll_read();
-        printk("%c", sc_s2[c]);
-    } 
+
+        switch(c) {
+            case(PS2_TWOBYTE) :
+                ps2_poll_read();
+                break;
+
+            case(PS2_TRIBYTE) :
+                ps2_poll_read();
+                ps2_poll_read();
+                break;
+
+            case(CAPS_IN) :
+                caps ^= 1;
+                set_charset();
+                break;
+                
+            case(RSHIFT_IN) :
+                shift = 1;
+                set_charset();
+                break;
+
+            case(LSHIFT_IN) :
+                shift = 1;
+                set_charset();
+                break;
+            
+            case(RSHIFT_OUT) :
+                shift = 0;
+                set_charset();
+                break;
+
+            case(LSHIFT_OUT) :
+                shift = 0;
+                set_charset();
+                break;
+
+            default:
+                if ((c = charset[c]) == 0)
+                    break;
+                printk("%c", c);
+                break;
+        }
+    }
 }
 
 int ps2_ack() {
@@ -81,59 +160,51 @@ void ps2_flush_out() {
 }
 
 void ps2_set_config() {
-    uint8_t status;
+    uint8_t config;
+    
+    ps2_flush_out();
 
     ps2_poll_write(READ_CONFIG); 
-    status = ps2_poll_read();
+    config = ps2_poll_read();
     
-    printk("ps2: Status=%x\n", status);
+    printk("ps2: Config=%x\n", config);
     
-    status &= ~(IRQ_BITS | TRANS_BIT | CLOCK_PORT1); // Translation?
-   
-    if (status & 0x20)
-        printk("ps2: Two Channel device confirmed\n");
+    config |= CLOCK_PORT2;
+    config &= ~(IRQ_BITS | TRANS_BIT | CLOCK_PORT1); // Translation?
+  
+    printk("ps2: Writing status %x\n", config);
  
-    ps2_poll_write2(SET_CONFIG, status);
+    ps2_poll_write2(SET_CONFIG, config);
 }
 
 void ps2_poll_keyboard_reset() {
     uint8_t status;
 
-    ps2_poll_write(KB_RESET);    
+    ps2_poll_write_dev(KB_RESET);    
     printk("ps2: Keyboard Reset Sent...\n");
     
-    if ((status = ps2_poll_read()) == CONFIRM_RESET) {
-        printk("ps2: Keyboard reset\n");
-    }
-    else if (status == 0xFC || status == 0xFD)
+    if (!ps2_ack())
         printk("ps2: Keyboard reset failed\n");
-    else if (status == RESEND)
-        printk("RESEND?\n");
-    //if (!ps2_ack())
-    //    printk("ps2: Keyboard reset failed\n");
+
+    if ((status = ps2_poll_read()) == CONFIRM_RESET)
+        printk("ps2: Keyboard reset\n");
+    else
+        printk("ps2: Keyboard reset failed\n");
 }
 
 void ps2_set_scancode() {
-    printk("ps2: Setting Scancode\n");
-    
-    //while(1);   
+    printk("ps2: Setting Scancode\n");   
 
-    ps2_poll_write(SET_SCANCODE);
+    ps2_poll_write_dev(SET_SCANCODE);
     if(!ps2_ack())
         printk("Error: Scan code not set\n");
     
-    ps2_poll_write(SCANCODE_1);
-    if (ps2_poll_read() != CONFIRM_SC_1)
+    ps2_poll_write_dev(SCANCODE_1);
+    if(!ps2_ack())
         printk("Error: Scan code not set\n");
-    else
-        printk("ps2: Scan code set\n");
 }
 
 void ps2_keyboard_init() {
-    ps2_poll_write(DISABLE_KEYBOARD);
-    if(!ps2_ack())
-        printk("Error: Keyboard not Disabled\n");
- 
     // Reset keyboard
     ps2_poll_keyboard_reset();
     
@@ -141,7 +212,7 @@ void ps2_keyboard_init() {
     ps2_set_scancode();
 
     // Enable Keyboard
-    ps2_poll_write(ENABLE_KEYBOARD);
+    ps2_poll_write_dev(ENABLE_KEYBOARD);
     if (ps2_ack())
         printk("ps2: Keyboard Enabled\n");
 }
@@ -153,8 +224,6 @@ void ps2_self_test() {
         printk("Error: ps2 controller not configured properly\n");
         return;
     }
-
-    printk("ps2: Configured Controller\n");
 
     ps2_poll_write(0xAB);
 
@@ -172,18 +241,23 @@ void ps2_init() {
     ps2_poll_write(DISABLE_PORT2);    
     printk("ps2: Disabled port 2\n");
     
-    ps2_flush_out();
+    // test controller 
+    ps2_self_test();
+
+    ps2_poll_write(DISABLE_PORT1);
+    ps2_poll_write(DISABLE_PORT2);
 
     // Set Config
     ps2_set_config();
-
-    // Self Test
-    ps2_self_test();
     
-    ps2_keyboard_init();
+    printk("ps2: Configured Controller\n");
 
     ps2_poll_write(ENABLE_PORT1);
+        
+    printk("ps2: Port 1 Enabled\n");
 
+    ps2_keyboard_init();
+    
     //ps2_poll_write(ENABLE_PORT2);
 }
 

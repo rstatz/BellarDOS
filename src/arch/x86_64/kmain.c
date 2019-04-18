@@ -12,8 +12,8 @@ void kmain() {
     VGA_display_char('R');
     VGA_display_char('K');
 
-    VGA_display_str((unsigned char*)"\nHello world\n");
-    VGA_display_str((unsigned char*)"TESTING\n\n\n\n\n\n\n\n"); 
+    //VGA_display_str((unsigned char*)"\nHello world\n");
+    //VGA_display_str((unsigned char*)"TESTING\n\n\n\n\n\n\n\n"); 
 
     print_short(-31040);
     print_char('\n');
@@ -26,7 +26,7 @@ void kmain() {
     printk("\n Testing %s with %d %crgs, which is %hx in hex %qx", "printk", 5, 'a', (short)5, (unsigned long long)8446744073709551615);
 
     VGA_display_str((unsigned char*)"\n\n\n");
-    VGA_display_str((unsigned char*)"DOWN HERE\n HEYO\n\n\n\n\n\nLAST\nSCROLL\n");
+    //VGA_display_str((unsigned char*)"DOWN HERE\n HEYO\n\n\n\n\n\nLAST\nSCROLL\n");
 
     ps2_init();
 

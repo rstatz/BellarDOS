@@ -16,6 +16,8 @@
 
 #define VGA_ENTRY(H, C) ((H << 8) | C)
 
+#define ASCII_BS 0x08
+
 static int width = 80;
 static int height = 25;
 
@@ -70,13 +72,14 @@ void scroll() {
 
 void VGA_display_char(char c) {
     // Different support for carriage return?
-    if ((c == '\n') | (c == '\r')) {
+    if (cursor >= width*height)
+        scroll();
+    
+    if ((c == '\n') | (c == '\r'))
         cursor = ((cursor / width) + 1) * width;
-
-        if (cursor >= width*height) {
-            scroll();
-            vgaBuff[cursor] = VGA_ENTRY(color, c);
-        }
+    else if (c == ASCII_BS) {
+        cursor--;
+        vgaBuff[cursor] = VGA_ENTRY(color, ' ');
     }
     else {
         vgaBuff[cursor] = VGA_ENTRY(color, c);
