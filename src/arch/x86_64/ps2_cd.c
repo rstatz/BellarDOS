@@ -186,7 +186,7 @@ void ps2_set_config() {
 }
 
 void ps2_poll_keyboard_reset() {
-    //uint8_t status;
+    uint8_t status;
 
     ps2_poll_write_dev(KB_RESET);    
     //printk("ps2: Keyboard Reset Sent...\n");
@@ -194,7 +194,7 @@ void ps2_poll_keyboard_reset() {
     if (!ps2_ack())
         printk("ps2: Keyboard reset failed\n");
 
-    //if ((status = ps2_poll_read()) == CONFIRM_RESET)
+    if ((status = ps2_poll_read()) == CONFIRM_RESET) {}
     //    printk("ps2: Keyboard reset\n");
     //else
     //    printk("ps2: Keyboard reset failed\n");
