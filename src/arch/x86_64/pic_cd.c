@@ -109,6 +109,10 @@ void pic_remap(int offset1, int offset2) {
     io_wait();
 }
 
+void IRQ_set_handler(int irq, irq_handler_t handler, void* arg) {
+    
+}
+
 void pic_init() {
     pic_remap(VEC_OFFSET1, VEC_OFFSET2);
     

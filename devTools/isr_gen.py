@@ -3,6 +3,9 @@ def gen_isr() :
 
     f = open("isr.asm", "w+")
 
+    s = ("isr_normal:\n"
+         "      \n")
+
     for i in range(0, 256) :
         s = ("isr%d:\n" % i +
              "    push rdi\n" +
