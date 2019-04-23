@@ -3,6 +3,10 @@
 
 #include <stdint.h>
 
+typedef void (*irq_handler_t)(int, int, void*);
+
+void IRQ_set_handler(int, irq_handler_t, void*);
+
 typedef struct IDTEntry {
     uint16_t targ_offset2_16: 16;
     uint16_t targ_selector: 16;
@@ -44,12 +48,14 @@ typedef struct IDT {
     IDTEntry reserved[9];
     IDTEntry virtualization;
     IDTEntry security_exception;
-    IDTentry reserved2;
+    IDTEntry reserved2;
     IDTEntry isr[224];
-} IDT;
+} __attribute__((packed)) IDT;
 
-IDTEntry IDTEntry(void*);
+IDTEntry newIDTEntry(void*);
 
-IDT IDT();
+void initIDT();
+
+void loadIDT(IDT* idt);
 
 #endif

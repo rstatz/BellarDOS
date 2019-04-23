@@ -1,5 +1,6 @@
 #include <stdint.h>
 #include "io.h"
+#include "idt.h"
 #include "pic_cd.h"
 
 #define PIC1 0x20
@@ -107,10 +108,6 @@ void pic_remap(int offset1, int offset2) {
     outb(PIC1_DATA, m1);
     outb(PIC2_DATA, m2);
     io_wait();
-}
-
-void IRQ_set_handler(int irq, irq_handler_t handler, void* arg) {
-    
 }
 
 void pic_init() {

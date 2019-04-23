@@ -13,7 +13,7 @@ grub_cfg=$(path)/grub.cfg
 C_FLAGS=-ffreestanding -mno-red-zone -Wall -Wextra -g -c
 
 C_FILES=$(wildcard $(path)/*.c)
-C_OBJ=kmain.o vga_cd.o ps2_cd.o strings.o math.o print.o splash.o pic_cd.o
+C_OBJ=kmain.o vga_cd.o ps2_cd.o strings.o math.o print.o splash.o pic_cd.o idt.o
 ASM_OBJ=multiboot_header.o boot.o long_mode_init.o
 
 LIBS= -nostdlib -lgcc
@@ -47,6 +47,7 @@ $(kernel): $(ASM_OBJ) $(linker_script) $(C_FILES)
 	$(CC) -o pic_cd.o $(C_FLAGS) $(path)/pic_cd.c $(LIBS)
 	$(CC) -o vga_cd.o $(C_FLAGS) $(path)/vga_cd.c $(LIBS)
 	$(CC) -o ps2_cd.o $(C_FLAGS) $(path)/ps2_cd.c $(LIBS)
+	$(CC) -o idt.o $(C_FLAGS) $(path)/idt.c $(LIBS)
 	$(CC) -o kmain.o $(C_FLAGS) $(path)/kmain.c $(LIBS)
 	$(CCLINKER) -n -T $(linker_script) -o $(kernel) $(ASM_OBJ) $(C_OBJ)
 
