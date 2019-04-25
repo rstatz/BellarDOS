@@ -1,4 +1,6 @@
 #include "strings.h"
+#include "idt.h"
+#include "pic_cd.h"
 #include "vga_cd.h"
 #include "ps2_cd.h"
 #include "print.h"
@@ -39,15 +41,21 @@ void kmain() {
     //VGA_display_str((unsigned char*)"DOWN HERE\n HEYO\n\n\n\n\n\nLAST\nSCROLL\n");
 
     splash();
+    
+    pic_init();    
 
     ps2_init();
     
-    delay_cycles(SPLASH_DELAY);
+    idt_init();
 
-    splash_end();
+    idt_load(256);
+
+//    delay_cycles(SPLASH_DELAY);
+
+//    splash_end();
 
     while(1) {
-        ps2_poll_keyboard();
-        //asm("hlt");
+//        ps2_poll_keyboard();
+        asm("hlt");
     }
 }

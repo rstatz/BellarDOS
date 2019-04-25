@@ -1,4 +1,5 @@
 #include <stdint.h>
+
 #include "io.h"
 #include "idt.h"
 #include "pic_cd.h"
@@ -111,6 +112,5 @@ void pic_remap(int offset1, int offset2) {
 }
 
 void pic_init() {
-    pic_remap(VEC_OFFSET1, VEC_OFFSET2);
-    
+    pic_remap(VEC_OFFSET1, VEC_OFFSET2);    
 }

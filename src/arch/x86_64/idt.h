@@ -20,14 +20,14 @@ typedef struct IDTEntry {
     uint8_t present: 1;
 
     uint16_t targ_offset_16: 16;
-    uint32_t targ_offset_32: 32;
+//    uint32_t targ_offset_32: 32;
 
-    uint32_t ign32: 32;    
+//    uint32_t ign32: 32;    
 } __attribute__((packed)) IDTEntry;
 
 typedef struct IDTref {
     uint16_t limit;
-    uintptr_t base;
+    void* base;
 } __attribute__((packed)) IDTref;
 
 typedef struct IDT {
@@ -60,8 +60,8 @@ typedef struct IDT {
 
 IDTEntry newIDTEntry(isr_t);
 
-void initIDT();
+void idt_init();
 
-void loadIDT(IDT* idt, int limit);
+void idt_load(int limit);
 
 #endif

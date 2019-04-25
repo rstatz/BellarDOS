@@ -1,8 +1,12 @@
 #include <stdint.h>
 
 #include "idt.h"
+#include "print.h"
+#include "pic_cd.h"
 
 #define NULL 0
+
+#define TARG_SEL 0x8
 
 #define MASK_32 0x00000000FFFFFFFF
 #define MASK_16 0x0000FFFF
@@ -45,9 +49,11 @@ extern void isr_unsupported();
 static IDT idt;
 
 IDTEntry IRQ_set_handler_entry(IDTEntry e, void* isr) {
-    e.targ_offset_32 = ((uint64_t)isr >> 32) & MASK_32;
+    //e.targ_offset_32 = ((uint64_t)isr >> 32) & MASK_32;
     e.targ_offset2_16 = ((uint64_t)isr >> 16) & MASK_16;
     e.targ_offset_16 = (uint64_t)isr & MASK_16;
+
+    e.targ_selector = TARG_SEL;
 
     return e;
 }
@@ -66,7 +72,7 @@ IDTEntry newIDTEntry(isr_t isr) {
     return e;
 }
 
-void initIDT() {
+void idt_init() {
     int i;
 
     idt.divide_by_zero = newIDTEntry(isr0);
@@ -107,11 +113,11 @@ void initIDT() {
     }
 }
 
-void loadIDT(IDT* idt, int limit) {
+void idt_load(int limit) {
     IDTref ref;
 
     ref.limit = limit;
-    ref.base = (long unsigned int)idt;
+    ref.base = &idt;
 
     asm volatile ("lidt %0"
                   : : "m" (ref));
@@ -121,4 +127,17 @@ void IRQ_set_handler(int irq, isr_t isr, void* idtaddr) {
     IDTEntry* idt = (IDTEntry*)idtaddr;
 
     IRQ_set_handler_entry(idt[irq], isr);
+}
+
+void interrupt_handler(int irq) {
+    PIC_sendEOI(irq);
+
+    printk("Interrupt %d\n", irq);
+}
+
+void interrupt_handler_err(int irq, int err) {
+    PIC_sendEOI(irq);
+
+    printk("Interrupt #%d\n", irq);
+    printk("Error Code %d\n", err);
 }
