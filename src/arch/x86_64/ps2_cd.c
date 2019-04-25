@@ -1,6 +1,7 @@
 #include "ps2_cd.h"
 #include "print.h"
 #include "io.h"
+#include "pic_cd.h"
 
 #define WELCOME "*Welcome to BellarDOS*\n"
 #define POLL_PROMPT "> "
@@ -50,6 +51,8 @@
 #define RSHIFT_OUT 0xB6
 #define LSHIFT_IN 0x2A
 #define LSHIFT_OUT 0xAA
+
+#define KEYBOARD_PIC_IRQLINE 1
 
 #define ASCII_BS 0x08
 
@@ -266,6 +269,8 @@ void ps2_init() {
 
     ps2_keyboard_init();
     
+    IRQ_clear_mask(KEYBOARD_PIC_IRQLINE);
+
     //ps2_poll_write(ENABLE_PORT2);
 }
 

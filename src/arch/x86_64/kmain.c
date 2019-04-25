@@ -6,6 +6,7 @@
 #include "print.h"
 #include "splash.h"
 
+#define PULSE_DELAY 100000000
 #define SPLASH_DELAY 300000000
 
 void delay_cycles(unsigned int i) {
@@ -16,6 +17,8 @@ void delay_cycles(unsigned int i) {
 }
 
 void kmain() {    
+
+    CLI; 
 
     VGA_init(VGA_COLOR_WHITE, VGA_COLOR_WHITE);
 
@@ -41,21 +44,25 @@ void kmain() {
     //VGA_display_str((unsigned char*)"DOWN HERE\n HEYO\n\n\n\n\n\nLAST\nSCROLL\n");
 
     splash();
-    
+
     pic_init();    
 
-    ps2_init();
-    
     idt_init();
 
     idt_load(256);
+
+    ps2_init();
+    
+    STI;
 
 //    delay_cycles(SPLASH_DELAY);
 
 //    splash_end();
 
     while(1) {
+        delay_cycles(PULSE_DELAY);
+        printk(".");
 //        ps2_poll_keyboard();
-        asm("hlt");
+//        asm("hlt");
     }
 }

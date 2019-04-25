@@ -263,13 +263,14 @@ global isr255
 isr_normal:
       call interrupt_handler
       pop rdi
-      iret
+      iretq
 
 isr_err:
       call interrupt_handler_err
       pop rsi
       pop rdi
-      iret
+      add rsp, 8
+      iretq
 
 isr0:
       cli

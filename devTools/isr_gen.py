@@ -31,13 +31,14 @@ def gen_isr() :
          "isr_normal:\n"
          "      call interrupt_handler\n"
          "      pop rdi\n"
-         "      iret\n"
+         "      iretq\n"
          "\n"
          "isr_err:\n"
          "      call interrupt_handler_err\n"
          "      pop rsi\n"
          "      pop rdi\n"
-         "      iret\n\n")
+         "      add rsp, 8\n"
+         "      iretq\n\n")
     f.write(s)
 
     for i in range(0, 256) :
