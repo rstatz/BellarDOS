@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 
+typedef void (*isr_t)();
 typedef void (*irq_handler_t)(int, int, void*);
 
 void IRQ_set_handler(int, irq_handler_t, void*);
@@ -23,6 +24,11 @@ typedef struct IDTEntry {
 
     uint32_t ign32: 32;    
 } __attribute__((packed)) IDTEntry;
+
+typedef struct IDTref {
+    uint16_t limit;
+    uintptr_t base;
+} __attribute__((packed)) IDTref;
 
 typedef struct IDT {
     IDTEntry divide_by_zero;
@@ -52,10 +58,10 @@ typedef struct IDT {
     IDTEntry isr[224];
 } __attribute__((packed)) IDT;
 
-IDTEntry newIDTEntry(void*);
+IDTEntry newIDTEntry(isr_t);
 
 void initIDT();
 
-void loadIDT(IDT* idt);
+void loadIDT(IDT* idt, int limit);
 
 #endif
