@@ -13,7 +13,7 @@ grub_cfg=$(path)/grub.cfg
 C_FLAGS=-ffreestanding -mno-red-zone -Wall -Wextra -g -c
 
 C_FILES=$(wildcard $(path)/*.c)
-C_OBJ=kmain.o vga_cd.o ps2_cd.o strings.o math.o print.o splash.o pic_cd.o idt.o
+C_OBJ=kmain.o vga_cd.o ps2_cd.o strings.o math.o print.o splash.o pic_cd.o idt.o debug.o
 ASM_OBJ=multiboot_header.o boot.o long_mode_init.o isr.o
 
 LIBS= -nostdlib -lgcc
@@ -35,11 +35,12 @@ $(OS): $(kernel) $(grub_cfg)
 	rm *.o
 
 run: $(OS).img
-	qemu-system-x86_64 -s -drive format=raw,file=$(OS).img -serial stdio
+	qemu-system-x86_64 -d int -s -drive format=raw,file=$(OS).img -serial stdio
 
 $(kernel): $(ASM_OBJ) $(linker_script) $(C_FILES)
 	mkdir -p $(OS)/boot/grub
 	cp $(grub_cfg) $(OS)/boot/grub/grub.cfg
+	$(CC) -o debug.o $(C_FLAGS) $(path)/debug.c $(LIBS)
 	$(CC) -o splash.o $(C_FLAGS) $(path)/splash.c $(LIBS)
 	$(CC) -o math.o $(C_FLAGS) $(path)/math.c $(LIBS)
 	$(CC) -o print.o $(C_FLAGS) $(path)/print.c $(LIBS)

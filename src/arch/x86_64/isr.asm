@@ -261,11 +261,13 @@ global isr254
 global isr255
 
 isr_normal:
+      hlt
       call interrupt_handler
       pop rdi
       iretq
 
 isr_err:
+      hlt
       call interrupt_handler_err
       pop rsi
       pop rdi

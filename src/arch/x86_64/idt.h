@@ -9,7 +9,7 @@ typedef void (*irq_handler_t)(int, int, void*);
 void IRQ_set_handler(int, irq_handler_t, void*);
 
 typedef struct IDTEntry {
-    uint16_t targ_offset2_16: 16;
+    uint16_t targ_offset_lower_16: 16;
     uint16_t targ_selector: 16;
     
     uint8_t ist: 3;
@@ -19,15 +19,15 @@ typedef struct IDTEntry {
     uint8_t dpl: 2;
     uint8_t present: 1;
 
-    uint16_t targ_offset_16: 16;
-//    uint32_t targ_offset_32: 32;
+    uint16_t targ_offset_upper_16: 16;
+    uint32_t targ_offset_32: 32;
 
-//    uint32_t ign32: 32;    
+    uint32_t ign32: 32;    
 } __attribute__((packed)) IDTEntry;
 
 typedef struct IDTref {
     uint16_t limit;
-    void* base;
+    uint64_t base;
 } __attribute__((packed)) IDTref;
 
 typedef struct IDT {

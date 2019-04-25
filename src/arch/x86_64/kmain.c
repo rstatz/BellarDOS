@@ -5,6 +5,7 @@
 #include "ps2_cd.h"
 #include "print.h"
 #include "splash.h"
+#include "debug.h"
 
 #define PULSE_DELAY 100000000
 #define SPLASH_DELAY 300000000
@@ -51,8 +52,12 @@ void kmain() {
 
     idt_load(256);
 
+//  BREAK;
+
     ps2_init();
-    
+
+//    BREAK;
+
     STI;
 
 //    delay_cycles(SPLASH_DELAY);

@@ -3,6 +3,7 @@
 #include "idt.h"
 #include "print.h"
 #include "pic_cd.h"
+#include "debug.h"
 
 #define NULL 0
 
@@ -49,11 +50,9 @@ extern void isr_unsupported();
 static IDT idt;
 
 IDTEntry IRQ_set_handler_entry(IDTEntry e, void* isr) {
-    //e.targ_offset_32 = ((uint64_t)isr >> 32) & MASK_32;
-    e.targ_offset2_16 = ((uint64_t)isr >> 16) & MASK_16;
-    e.targ_offset_16 = (uint64_t)isr & MASK_16;
-
-    e.targ_selector = TARG_SEL;
+    e.targ_offset_32 = ((uint64_t)isr >> 32) & MASK_32;
+    e.targ_offset_upper_16 = ((uint64_t)isr >> 16) & MASK_16;
+    e.targ_offset_lower_16 = (uint64_t)isr & MASK_16;
 
     return e;
 }
@@ -68,6 +67,13 @@ IDTEntry newIDTEntry(isr_t isr) {
 
     e.zero = 0;
     e.present = 1;
+    
+    e.targ_selector = TARG_SEL;
+    e.type = 0xf;
+    e.dpl = 0;
+    e.ist = 0;
+    e.ign5 = 0;
+    e.ign32 = 0;
 
     return e;
 }
@@ -75,39 +81,41 @@ IDTEntry newIDTEntry(isr_t isr) {
 void idt_init() {
     int i;
 
-    idt.divide_by_zero = newIDTEntry(isr0);
-    idt.debug = newIDTEntry(isr1);
-    idt.non_maskable_interrupt = newIDTEntry(isr2);
-    idt.breakpoint = newIDTEntry(isr3);
-    idt.overflow = newIDTEntry(isr4);
-    idt.bound_range_exceeded = newIDTEntry(isr5);
-    idt.invalid_opcode = newIDTEntry(isr6);
-    idt.device_not_available = newIDTEntry(isr7);
-    idt.double_fault = newIDTEntry(isr8);
-    idt.coproc_seg_overrun = newIDTEntry(isr9);
-    idt.invalid_tss = newIDTEntry(isr10);
-    idt.segment_not_present = newIDTEntry(isr11);
-    idt.stack_segment_fault = newIDTEntry(isr12);
-    idt.general_protection_fault = newIDTEntry(isr13);
-    idt.page_fault = newIDTEntry(isr14);
-    idt.reserved1 = newIDTEntry(isr15);
-    idt.x87_floating_point = newIDTEntry(isr16);
-    idt.alignment_check = newIDTEntry(isr17);
-    idt.machine_check = newIDTEntry(isr18);
-    idt.simd_floating_point = newIDTEntry(isr19);
-    idt.reserved[0] = newIDTEntry(isr20);
-    idt.reserved[1] = newIDTEntry(isr21);
-    idt.reserved[2] = newIDTEntry(isr22);
-    idt.reserved[3] = newIDTEntry(isr23);
-    idt.reserved[4] = newIDTEntry(isr24);
-    idt.reserved[5] = newIDTEntry(isr25);
-    idt.reserved[6] = newIDTEntry(isr26);
-    idt.reserved[7] = newIDTEntry(isr27);
-    idt.reserved[8] = newIDTEntry(isr28);
-    idt.virtualization = newIDTEntry(isr29);
-    idt.security_exception = newIDTEntry(isr30);
-    idt.reserved2 = newIDTEntry(isr31);
+    idt.divide_by_zero = newIDTEntry(&isr0);
+    idt.debug = newIDTEntry(&isr1);
+    idt.non_maskable_interrupt = newIDTEntry(&isr2);
+    idt.breakpoint = newIDTEntry(&isr3);
+    idt.overflow = newIDTEntry(&isr4);
+    idt.bound_range_exceeded = newIDTEntry(&isr5);
+    idt.invalid_opcode = newIDTEntry(&isr6);
+    idt.device_not_available = newIDTEntry(&isr7);
+    idt.double_fault = newIDTEntry(&isr8);
+    idt.coproc_seg_overrun = newIDTEntry(&isr9);
+    idt.invalid_tss = newIDTEntry(&isr10);
+    idt.segment_not_present = newIDTEntry(&isr11);
+    idt.stack_segment_fault = newIDTEntry(&isr12);
+    idt.general_protection_fault = newIDTEntry(&isr13);
+    idt.page_fault = newIDTEntry(&isr14);
+    idt.reserved1 = newIDTEntry(&isr15);
+    idt.x87_floating_point = newIDTEntry(&isr16);
+    idt.alignment_check = newIDTEntry(&isr17);
+    idt.machine_check = newIDTEntry(&isr18);
+    idt.simd_floating_point = newIDTEntry(&isr19);
+    idt.reserved[0] = newIDTEntry(&isr20);
+    idt.reserved[1] = newIDTEntry(&isr21);
+    idt.reserved[2] = newIDTEntry(&isr22);
+    idt.reserved[3] = newIDTEntry(&isr23);
+    idt.reserved[4] = newIDTEntry(&isr24);
+    idt.reserved[5] = newIDTEntry(&isr25);
+    idt.reserved[6] = newIDTEntry(&isr26);
+    idt.reserved[7] = newIDTEntry(&isr27);
+    idt.reserved[8] = newIDTEntry(&isr28);
+    idt.virtualization = newIDTEntry(&isr29);
+    idt.security_exception = newIDTEntry(&isr30);
+    idt.reserved2 = newIDTEntry(&isr31);
     
+    BREAK;
+
     for (i = 0; i < 224; i++) {
         idt.isr[i] = newIDTEntry(NULL);
     }
@@ -116,11 +124,10 @@ void idt_init() {
 void idt_load(int limit) {
     IDTref ref;
 
-    ref.limit = limit;
-    ref.base = &idt;
-
-    asm volatile ("lidt %0"
-                  : : "m" (ref));
+    ref.limit = (limit * 32) - 1;
+    ref.base = (uint64_t)&idt;
+//    bpoint();
+    asm volatile ("lidt %0" : : "m" (ref));
 }
 
 void IRQ_set_handler(int irq, isr_t isr, void* idtaddr) {

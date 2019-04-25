@@ -28,7 +28,7 @@ void splash() {
                                    v0.0.0.1\n";
 
     VGA_set_color(VGA_COLOR_BLACK, VGA_COLOR_WHITE);
-    VGA_clear();
+    //VGA_clear();
     VGA_display_str((unsigned char*)img);
 }
 
