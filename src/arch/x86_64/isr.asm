@@ -1,3 +1,4 @@
+extern bpoint
 extern interrupt_handler
 extern interrupt_handler_err
 
@@ -261,17 +262,21 @@ global isr254
 global isr255
 
 isr_normal:
-      hlt
+      call bpoint
+      mov qword[0xb8000], 0x0101010101
       call interrupt_handler
       pop rdi
+      sti
       iretq
 
 isr_err:
-      hlt
+      call bpoint
+      mov qword[0xb8000], 0x0101010101
       call interrupt_handler_err
       pop rsi
       pop rdi
-      add rsp, 8
+      add rbp, 8
+      sti
       iretq
 
 isr0:
@@ -1829,6 +1834,6 @@ isr255:
 isr_unsupported:
       cli
       push rdi
-      mov rdi, 0
+      mov rdi, 69
       jmp isr_normal
 

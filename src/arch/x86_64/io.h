@@ -18,9 +18,10 @@ static inline void outb(uint8_t value, uint16_t port) {
 
 // To be used when sending a command to a device does not have a response bit
 static inline void io_wait() {
-    asm volatile ("jmp 1f\n\t"
-                  "1:jmp 2f\n\t"
-                  "2:");
+    asm volatile ("outb %%al, $0x80" : : "a"(0));
+//    asm volatile ("jmp 1f\n\t"
+//                  "1:jmp 2f\n\t"
+//                  "2:");
 }
 
 #endif

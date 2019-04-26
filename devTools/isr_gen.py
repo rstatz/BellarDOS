@@ -17,7 +17,8 @@ def gen_isr() :
 
     f = open("src/arch/x86_64/isr.asm", "w+")
 
-    s = ("extern interrupt_handler\n"
+    s = ("extern bpoint\n"
+         "extern interrupt_handler\n"
          "extern interrupt_handler_err\n\n"
          "global isr_unsupported\n\n")
     
@@ -29,19 +30,23 @@ def gen_isr() :
 
     s =  ("\n"
          "isr_normal:\n"
+         "      call bpoint\n"
          "      mov qword[0xb8000], 0x0101010101\n"
-         "      hlt\n"
+#         "      hlt\n"
          "      call interrupt_handler\n"
          "      pop rdi\n"
+         "      sti\n"
          "      iretq\n"
          "\n"
          "isr_err:\n"
+         "      call bpoint\n"
          "      mov qword[0xb8000], 0x0101010101\n"
-         "      hlt\n"
+#         "      hlt\n"
          "      call interrupt_handler_err\n"
          "      pop rsi\n"
          "      pop rdi\n"
-         "      add rsp, 8\n"
+         "      add rbp, 8\n"
+         "      sti\n"
          "      iretq\n\n")
     f.write(s)
 
@@ -65,7 +70,7 @@ def gen_isr() :
     s = ("isr_unsupported:\n" 
          "      cli\n"
          "      push rdi\n"
-         "      mov rdi, 0\n"
+         "      mov rdi, 69\n"
          "      jmp isr_normal\n\n")
     f.write(s)
 

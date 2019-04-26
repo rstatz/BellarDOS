@@ -45,6 +45,9 @@ extern void isr29();
 extern void isr30();
 extern void isr31();
 
+extern void isr32();
+extern void isr33();
+
 extern void isr_unsupported();
 
 static IDT idt;
@@ -113,12 +116,13 @@ void idt_init() {
     idt.virtualization = newIDTEntry(&isr29);
     idt.security_exception = newIDTEntry(&isr30);
     idt.reserved2 = newIDTEntry(&isr31);
-    
-    BREAK;
 
     for (i = 0; i < 224; i++) {
         idt.isr[i] = newIDTEntry(NULL);
     }
+
+    idt.isr[32] = newIDTEntry(&isr32); // Timer
+    idt.isr[33] = newIDTEntry(&isr33); // Keyboard Interrupt
 }
 
 void idt_load(int limit) {
@@ -126,7 +130,7 @@ void idt_load(int limit) {
 
     ref.limit = (limit * 32) - 1;
     ref.base = (uint64_t)&idt;
-//    bpoint();
+
     asm volatile ("lidt %0" : : "m" (ref));
 }
 
