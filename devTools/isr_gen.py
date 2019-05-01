@@ -30,47 +30,47 @@ def gen_isr() :
 
     s =  ("\n"
          "isr_normal:\n"
-         "      call bpoint\n"
-         "      mov qword[0xb8000], 0x0101010101\n"
+#         "      call bpoint\n"
 #         "      hlt\n"
          "      call interrupt_handler\n"
          "      pop rdi\n"
-         "      sti\n"
+#         "      sti\n"
          "      iretq\n"
          "\n"
          "isr_err:\n"
-         "      call bpoint\n"
-         "      mov qword[0xb8000], 0x0101010101\n"
+#         "      call bpoint\n"
 #         "      hlt\n"
          "      call interrupt_handler_err\n"
          "      pop rsi\n"
          "      pop rdi\n"
          "      add rbp, 8\n"
-         "      sti\n"
+#         "      mov rsp, rbp\n"
+#         "      sti\n"
          "      iretq\n\n")
     f.write(s)
 
     for i in range(0, 256) :
         if (isr_err[i] == 1) :
             s = ("isr%d:\n" %i +
-                 "      cli\n"
+#                 "      call bpoint\n"
+#                 "      cli\n"
                  "      push rdi\n"
                  "      push rsi\n"
                  "      mov rdi, 0x%x\n" % i +
-                 "      mov rsi, qword [rsp + 16]\n"
+                 "      mov rsi, [rbp]\n"
                  "      jmp isr_err\n\n")
         else :
             s = ("isr%d:\n" % i +
-                 "      cli\n"
+#                 "      cli\n"
                  "      push rdi\n"
                  "      mov rdi, 0x%x\n" % i +
                  "      jmp isr_normal\n\n")
         f.write(s)
 
     s = ("isr_unsupported:\n" 
-         "      cli\n"
+#         "      cli\n"
          "      push rdi\n"
-         "      mov rdi, 69\n"
+         "      mov rdi, 255\n"
          "      jmp isr_normal\n\n")
     f.write(s)
 

@@ -3,11 +3,13 @@
 #include "idt.h"
 #include "print.h"
 #include "pic_cd.h"
+#include "ps2_cd.h"
 #include "debug.h"
 
 #define NULL 0
 
 #define TARG_SEL 0x8
+#define GATE_TYPE 0xE
 
 #define MASK_32 0x00000000FFFFFFFF
 #define MASK_16 0x0000FFFF
@@ -44,13 +46,12 @@ extern void isr28();
 extern void isr29();
 extern void isr30();
 extern void isr31();
-
 extern void isr32();
 extern void isr33();
 
 extern void isr_unsupported();
 
-static IDT idt;
+static volatile IDT idt;
 
 IDTEntry IRQ_set_handler_entry(IDTEntry e, void* isr) {
     e.targ_offset_32 = ((uint64_t)isr >> 32) & MASK_32;
@@ -64,7 +65,7 @@ IDTEntry newIDTEntry(isr_t isr) {
     IDTEntry e;
 
     if (isr == NULL)
-        e = IRQ_set_handler_entry(e, isr_unsupported);
+        e = IRQ_set_handler_entry(e, &isr_unsupported);
     else
         e = IRQ_set_handler_entry(e, (void*)isr);
 
@@ -72,7 +73,7 @@ IDTEntry newIDTEntry(isr_t isr) {
     e.present = 1;
     
     e.targ_selector = TARG_SEL;
-    e.type = 0xf;
+    e.type = GATE_TYPE;
     e.dpl = 0;
     e.ist = 0;
     e.ign5 = 0;
@@ -121,8 +122,8 @@ void idt_init() {
         idt.isr[i] = newIDTEntry(NULL);
     }
 
-    idt.isr[32] = newIDTEntry(&isr32); // Timer
-    idt.isr[33] = newIDTEntry(&isr33); // Keyboard Interrupt
+    idt.isr[0] = newIDTEntry(&isr32); // Timer
+    idt.isr[1] = newIDTEntry(&isr33); // Keyboard Interrupt
 }
 
 void idt_load(int limit) {
@@ -141,9 +142,17 @@ void IRQ_set_handler(int irq, isr_t isr, void* idtaddr) {
 }
 
 void interrupt_handler(int irq) {
-    PIC_sendEOI(irq);
+    PIC_sendEOI(irq - 32);
 
-    printk("Interrupt %d\n", irq);
+//    printk("Interrupt %d\n", irq);
+
+    switch(irq) {
+        case(33) :
+            IRQ_keyboard_handler();
+            break;
+        default :
+            printk("UNSUPPORTED INTERRUPT: %d\n", irq);
+    }
 }
 
 void interrupt_handler_err(int irq, int err) {
@@ -151,4 +160,7 @@ void interrupt_handler_err(int irq, int err) {
 
     printk("Interrupt #%d\n", irq);
     printk("Error Code %d\n", err);
+    BREAK;
+    if (irq == 13)
+        BREAK;
 }

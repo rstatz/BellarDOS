@@ -1,4 +1,9 @@
+#include "splash.h"
+#include "print.h"
 #include "vga_cd.h"
+
+#define SHELL_PROMPT "> "
+#define WELCOME "*Welcome to BellarDOS*\n"
 
 void splash() {
     char* img = "                                oooo     oooo\n\
@@ -35,4 +40,7 @@ void splash() {
 void splash_end() {
     VGA_set_color(VGA_COLOR_CYAN, VGA_COLOR_BROWN);
     VGA_clear();
+
+    printk(WELCOME);
+    printk(SHELL_PROMPT);
 }

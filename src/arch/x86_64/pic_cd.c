@@ -26,6 +26,8 @@
 #define VEC_OFFSET1 0x20
 #define VEC_OFFSET2 0x28
 
+#define IRQLINE_TIMER 0
+
 // Commands
 #define PIC_EOI 0x20
 #define PIC_READ_IRR 0x0a // Interrupts raised
@@ -36,6 +38,7 @@ void PIC_sendEOI(uint8_t irq) {
         outb(PIC2_CMD, PIC_EOI);
     
     outb(PIC1_CMD, PIC_EOI); 
+//    io_wait();
 }
 
 void IRQ_set_mask(uint8_t IRQline) {
@@ -51,6 +54,7 @@ void IRQ_set_mask(uint8_t IRQline) {
 
     value = inb(port) | (1 << IRQline);
     outb(port, value);
+//    io_wait();
 }
 
 void IRQ_clear_mask(uint8_t IRQline) {
@@ -66,6 +70,7 @@ void IRQ_clear_mask(uint8_t IRQline) {
 
     value = inb(port) & ~(1 << IRQline);
     outb(port, value);
+//    io_wait();
 }
 
 static uint16_t pic_get_irq_reg(int ocw3) {
@@ -110,8 +115,11 @@ void pic_remap(int offset1, int offset2) {
 
     outb(PIC1_DATA, m1);
     outb(PIC2_DATA, m2);
+//    io_wait();
 }
 
 void pic_init() {
     pic_remap(VEC_OFFSET1, VEC_OFFSET2);    
+
+    IRQ_set_mask(IRQLINE_TIMER);
 }

@@ -52,22 +52,22 @@ void kmain() {
 
     idt_load(256);
 
-//  BREAK;
+//    BREAK;
 
     ps2_init();
+
+    delay_cycles(SPLASH_DELAY);
+
+    splash_end();
 
 //    BREAK;
 
     STI;
 
-//    delay_cycles(SPLASH_DELAY);
-
-//    splash_end();
-
     while(1) {
-        delay_cycles(PULSE_DELAY);
-        printk(".");
+//        delay_cycles(PULSE_DELAY);
+//        printk(".");
 //        ps2_poll_keyboard();
-//        asm("hlt");
+        asm("hlt");
     }
 }

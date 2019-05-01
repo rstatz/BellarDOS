@@ -3,9 +3,6 @@
 #include "io.h"
 #include "pic_cd.h"
 
-#define WELCOME "*Welcome to BellarDOS*\n"
-#define POLL_PROMPT "> "
-
 // Ports
 #define PS2_CMD_REG 0x64
 #define PS2_DATA_REG 0x60
@@ -23,6 +20,8 @@
 #define OSTATUS_MASK 0x01
 
 #define IRQ_BITS 0x03
+#define IRQ_KEYBOARD_CFG 0x01
+#define IRQ_MOUSE_CFG 0x02
 #define TRANS_BIT 0x40
 #define CLOCK_PORT1 0x10
 #define CLOCK_PORT2 0x20
@@ -52,9 +51,11 @@
 #define LSHIFT_IN 0x2A
 #define LSHIFT_OUT 0xAA
 
-#define KEYBOARD_PIC_IRQLINE 1
+#define IRQLINE_KEYBOARD 1
 
 #define ASCII_BS 0x08
+
+#define SHELL_PROMPT "> "
 
 static uint8_t shift = 0;
 static uint8_t caps = 0;
@@ -67,19 +68,19 @@ static uint8_t* charset = sc_s1;
 
 void ps2_poll_write(uint8_t c) {
     while (inb(PS2_CMD_REG) & ISTATUS_MASK);
-    outb(c, PS2_CMD_REG);
+    outb(PS2_CMD_REG, c);
 }
 
 void ps2_poll_write2(uint8_t cmd, uint8_t data) {
     while (inb(PS2_CMD_REG) & ISTATUS_MASK);
-    outb(cmd, PS2_CMD_REG);
+    outb(PS2_CMD_REG, cmd);
     while (inb(PS2_CMD_REG) & ISTATUS_MASK);
-    outb(data, PS2_DATA_REG);
+    outb(PS2_DATA_REG, data);
 }
 
 void ps2_poll_write_dev(uint8_t data) {
     while (inb(PS2_CMD_REG) & ISTATUS_MASK);
-    outb(data, PS2_DATA_REG);
+    outb(PS2_DATA_REG, data);
 }
 
 uint8_t ps2_poll_read() {
@@ -102,61 +103,62 @@ void set_charset() {
         charset = sc_s1;
 }
 
+void ps2_read_keyboard(uint8_t c) {
+    switch(c) {
+        case(PS2_TWOBYTE) :
+            ps2_poll_read();
+            break;
+
+        case(PS2_TRIBYTE) :
+            ps2_poll_read();
+            ps2_poll_read();
+            break;
+
+        case(CAPS_IN) :
+            caps ^= 1;
+            set_charset();
+            break;
+                
+        case(RSHIFT_IN) :
+            shift = 1;
+            set_charset();
+            break;
+
+        case(LSHIFT_IN) :
+            shift = 1;
+            set_charset();
+            break;
+            
+        case(RSHIFT_OUT) :
+            shift = 0;
+            set_charset();
+            break;
+
+        case(LSHIFT_OUT) :
+            shift = 0;
+            set_charset();
+            break;
+
+        default:
+            if ((c = charset[c]) == 0)
+                break;
+                
+        printk("%c", c);
+
+        if (c == '\n' || c == '\r')
+            printk(SHELL_PROMPT);
+
+        break;
+    }
+}
+
 void ps2_poll_keyboard() {
     uint8_t c;
     
-    printk(WELCOME);
-    printk(POLL_PROMPT);
-
     while (1) {
         c = ps2_poll_read();
 
-        switch(c) {
-            case(PS2_TWOBYTE) :
-                ps2_poll_read();
-                break;
-
-            case(PS2_TRIBYTE) :
-                ps2_poll_read();
-                ps2_poll_read();
-                break;
-
-            case(CAPS_IN) :
-                caps ^= 1;
-                set_charset();
-                break;
-                
-            case(RSHIFT_IN) :
-                shift = 1;
-                set_charset();
-                break;
-
-            case(LSHIFT_IN) :
-                shift = 1;
-                set_charset();
-                break;
-            
-            case(RSHIFT_OUT) :
-                shift = 0;
-                set_charset();
-                break;
-
-            case(LSHIFT_OUT) :
-                shift = 0;
-                set_charset();
-                break;
-
-            default:
-                if ((c = charset[c]) == 0)
-                    break;
-                
-                printk("%c", c);
-
-                if (c == '\n' || c == '\r')
-                    printk(POLL_PROMPT);
-
-                break;
-        }
+        ps2_read_keyboard(c);
     }
 }
 
@@ -180,8 +182,8 @@ void ps2_set_config() {
     
     //printk("ps2: Config=%x\n", config);
     
-    config |= CLOCK_PORT2;
-    config &= ~(IRQ_BITS | TRANS_BIT | CLOCK_PORT1); // Translation?
+    config |= CLOCK_PORT2 | IRQ_KEYBOARD_CFG;
+    config &= ~(IRQ_MOUSE_CFG | TRANS_BIT | CLOCK_PORT1); // Translation?
   
     //printk("ps2: Writing status %x\n", config);
  
@@ -269,8 +271,14 @@ void ps2_init() {
 
     ps2_keyboard_init();
     
-    IRQ_clear_mask(KEYBOARD_PIC_IRQLINE);
+    IRQ_clear_mask(IRQLINE_KEYBOARD);
 
     //ps2_poll_write(ENABLE_PORT2);
 }
 
+void IRQ_keyboard_handler() {
+    uint8_t c;
+
+    c = ps2_poll_read();
+    ps2_read_keyboard(c);
+}

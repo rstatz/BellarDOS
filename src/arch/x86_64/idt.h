@@ -18,8 +18,8 @@ typedef struct IDTEntry {
     uint8_t zero: 1;
     uint8_t dpl: 2;
     uint8_t present: 1;
-
     uint16_t targ_offset_upper_16: 16;
+
     uint32_t targ_offset_32: 32;
 
     uint32_t ign32: 32;    
