@@ -3,6 +3,7 @@
 
 #include "strings.h"
 #include "vga_cd.h"
+#include "irq.h"
 
 #define VGA_BASE 0xb8000
 
@@ -65,6 +66,16 @@ void scroll() {
 
 void VGA_display_char(unsigned char c) {
     // Different support for carriage return?
+    uint8_t disabled_ints = 0;
+
+    if (irq_enabled()) {
+        disabled_ints = 1;
+        CLI;
+    }
+
+    if (irq_enabled())
+        CLI;
+    
     if (cursor >= width*height)
         scroll();
     
@@ -78,6 +89,9 @@ void VGA_display_char(unsigned char c) {
         vgaBuff[cursor] = VGA_ENTRY(color, c);
         cursor++;
     }
+
+    if (disabled_ints)
+        STI;
 }
 
 void VGA_display_str(unsigned char* str) {

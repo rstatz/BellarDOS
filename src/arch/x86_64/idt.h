@@ -62,6 +62,6 @@ IDTEntry newIDTEntry(isr_t);
 
 void idt_init();
 
-void idt_load(int limit);
+void idt_load();
 
 #endif

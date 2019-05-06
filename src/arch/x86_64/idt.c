@@ -14,6 +14,9 @@
 #define MASK_32 0x00000000FFFFFFFF
 #define MASK_16 0x0000FFFF
 
+#define IDT_SIZE 256
+#define IDT_SIZE_BYTES (IDT_SIZE * 16)
+
 extern void isr0();
 extern void isr1();
 extern void isr2();
@@ -126,10 +129,10 @@ void idt_init() {
     idt.isr[1] = newIDTEntry(&isr33); // Keyboard Interrupt
 }
 
-void idt_load(int limit) {
+void idt_load() {
     IDTref ref;
 
-    ref.limit = (limit * 32) - 1;
+    ref.limit = IDT_SIZE_BYTES - 1;
     ref.base = (uint64_t)&idt;
 
     asm volatile ("lidt %0" : : "m" (ref));
