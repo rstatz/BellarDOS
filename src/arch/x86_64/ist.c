@@ -1,5 +1,7 @@
 #include "ist.h"
 
+TSS tss;
+
 TSSdesc new_TSSdesc() {
     TSSdesc t;
 
@@ -12,3 +14,5 @@ TSSdesc new_TSSdesc() {
 
     return t;
 }
+
+void init_TSS();

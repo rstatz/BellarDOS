@@ -50,4 +50,6 @@ typedef struct TSS {
 
 TSSdesc new_TSSdesc();
 
+void init_TSS();
+
 #endif
