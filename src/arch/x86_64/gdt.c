@@ -6,17 +6,20 @@
 #define MASK_8 0xFF
 #define MASK_16 0xFFFF
 
-#define GDT_NUM_8 2
+#define GDT_NUM_8 3
 #define GDT_NUM_16 1
 #define GDT_SIZE_8BYTES (GDT_NUM_8 + (2 * GDT_NUM_16))
 #define GDT_SIZE_BYTES (GDT_SIZE_8BYTES * 8)
 
-#define SEGMENT_SIZE 0xFFFFFFFF
+#define TSS_SIZE_BYTES 16
 
 #define CODE_SEGMENT_FLAGS 0xC
 #define CODE_SEGMENT_ACCESS 0x9A
 
-GDTentry[GDT_SIZE_8BYTES] gdt;
+#define DATA_SEGMENT_FLAGS 0x0
+#define DATA_SEGMENT_ACCESS 0x92
+
+GDTentry gdt[GDT_SIZE_8BYTES];
 
 /*GDTentry_access_byte new_GDTentry_access_byte(uint8_t rw, uint8_t exec) {
     GDTentry_access_byte a;
@@ -50,7 +53,15 @@ GDTentry newGDTentry(uint32_t limit, uint32_t base, uint8_t access, uint8_t flag
 GDTentry get_gdt_code_segment_entry() {
     GDTentry e;
 
-    e =  newGDTentry(SEGMENT_SIZE, 0, CODE_SEGMENT_ACCESS, CODE_SEGMENT_FLAGS);
+    e = newGDTentry(0, 0, CODE_SEGMENT_ACCESS, CODE_SEGMENT_FLAGS);
+
+    return e;
+}
+
+GDTentry get_gdt_data_segment_entry() {
+    GDTentry e;
+
+    e = newGDTentry(0, 0, DATA_SEGMENT_ACCESS, DATA_SEGMENT_FLAGS);
 
     return e;
 }
@@ -58,19 +69,21 @@ GDTentry get_gdt_code_segment_entry() {
 void gdt_init() {
     TSSdesc ist = new_TSSdesc();
 
-    init_TSS();
+    init_TSS(&gdt[3]);
 
     gdt[0] = newGDTentry(0, 0, 0, 0);
     gdt[1] = get_gdt_code_segment_entry();
-    gdt[2] = (GDTentry)ist;
-    gdt[3] = ((GDTentry*)&ist)[1];
+    gdt[2] = get_gdt_data_segment_entry();
+    gdt[3] = ((GDTentry*)&ist)[0];
+    gdt[4] = ((GDTentry*)&ist)[1];
 }
 
 void gdt_load() {
     GDTdesc desc;
 
     desc.limit = GDT_SIZE_BYTES - 1;
-    desc.offset = (uint64_t)&gdt;
+    desc.base = (uint64_t)&gdt;
 
     asm volatile("lgdt %0" : : "m" (desc));
+    load_task_register(GDT_SIZE_BYTES - TSS_SIZE_BYTES);
 }

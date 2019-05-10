@@ -58,7 +58,7 @@ typedef struct IDT {
     IDTEntry isr[224];
 } __attribute__((packed)) IDT;
 
-IDTEntry newIDTEntry(isr_t);
+IDTEntry newIDTEntry(isr_t, uint8_t);
 
 void idt_init();
 

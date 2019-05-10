@@ -1,5 +1,6 @@
 #include "strings.h"
 
+#include "gdt.h"
 #include "idt.h"
 #include "irq.h"
 
@@ -31,10 +32,13 @@ void kmain() {
     splash();
 
     pic_init();    
-
     idt_init();
-
     idt_load(255);
+
+//    BREAK;
+
+    gdt_init();
+    gdt_load();   
 
 //    BREAK;
 
@@ -44,7 +48,7 @@ void kmain() {
 
     splash_end();
 
-//    BREAK;
+    BREAK;
 
     STI;
 

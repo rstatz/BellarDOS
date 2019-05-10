@@ -17,6 +17,9 @@
 #define IDT_SIZE 256
 #define IDT_SIZE_BYTES (IDT_SIZE * 16)
 
+#define IST_NORMAL 1
+#define IST_ERROR 2
+
 extern void isr0();
 extern void isr1();
 extern void isr2();
@@ -64,7 +67,7 @@ IDTEntry IRQ_set_handler_entry(IDTEntry e, void* isr) {
     return e;
 }
 
-IDTEntry newIDTEntry(isr_t isr) {
+IDTEntry newIDTEntry(isr_t isr, uint8_t ist) {
     IDTEntry e;
 
     if (isr == NULL)
@@ -78,7 +81,7 @@ IDTEntry newIDTEntry(isr_t isr) {
     e.targ_selector = TARG_SEL;
     e.type = GATE_TYPE;
     e.dpl = 0;
-    e.ist = 0;
+    e.ist = ist;
     e.ign5 = 0;
     e.ign32 = 0;
 
@@ -88,45 +91,45 @@ IDTEntry newIDTEntry(isr_t isr) {
 void idt_init() {
     int i;
 
-    idt.divide_by_zero = newIDTEntry(&isr0);
-    idt.debug = newIDTEntry(&isr1);
-    idt.non_maskable_interrupt = newIDTEntry(&isr2);
-    idt.breakpoint = newIDTEntry(&isr3);
-    idt.overflow = newIDTEntry(&isr4);
-    idt.bound_range_exceeded = newIDTEntry(&isr5);
-    idt.invalid_opcode = newIDTEntry(&isr6);
-    idt.device_not_available = newIDTEntry(&isr7);
-    idt.double_fault = newIDTEntry(&isr8);
-    idt.coproc_seg_overrun = newIDTEntry(&isr9);
-    idt.invalid_tss = newIDTEntry(&isr10);
-    idt.segment_not_present = newIDTEntry(&isr11);
-    idt.stack_segment_fault = newIDTEntry(&isr12);
-    idt.general_protection_fault = newIDTEntry(&isr13);
-    idt.page_fault = newIDTEntry(&isr14);
-    idt.reserved1 = newIDTEntry(&isr15);
-    idt.x87_floating_point = newIDTEntry(&isr16);
-    idt.alignment_check = newIDTEntry(&isr17);
-    idt.machine_check = newIDTEntry(&isr18);
-    idt.simd_floating_point = newIDTEntry(&isr19);
-    idt.reserved[0] = newIDTEntry(&isr20);
-    idt.reserved[1] = newIDTEntry(&isr21);
-    idt.reserved[2] = newIDTEntry(&isr22);
-    idt.reserved[3] = newIDTEntry(&isr23);
-    idt.reserved[4] = newIDTEntry(&isr24);
-    idt.reserved[5] = newIDTEntry(&isr25);
-    idt.reserved[6] = newIDTEntry(&isr26);
-    idt.reserved[7] = newIDTEntry(&isr27);
-    idt.reserved[8] = newIDTEntry(&isr28);
-    idt.virtualization = newIDTEntry(&isr29);
-    idt.security_exception = newIDTEntry(&isr30);
-    idt.reserved2 = newIDTEntry(&isr31);
+    idt.divide_by_zero = newIDTEntry(&isr0, IST_NORMAL);
+    idt.debug = newIDTEntry(&isr1, IST_NORMAL);
+    idt.non_maskable_interrupt = newIDTEntry(&isr2, IST_NORMAL);
+    idt.breakpoint = newIDTEntry(&isr3, IST_NORMAL);
+    idt.overflow = newIDTEntry(&isr4, IST_NORMAL);
+    idt.bound_range_exceeded = newIDTEntry(&isr5, IST_NORMAL);
+    idt.invalid_opcode = newIDTEntry(&isr6, IST_NORMAL);
+    idt.device_not_available = newIDTEntry(&isr7, IST_NORMAL);
+    idt.double_fault = newIDTEntry(&isr8, IST_ERROR);
+    idt.coproc_seg_overrun = newIDTEntry(&isr9, IST_NORMAL);
+    idt.invalid_tss = newIDTEntry(&isr10, IST_ERROR);
+    idt.segment_not_present = newIDTEntry(&isr11, IST_ERROR);
+    idt.stack_segment_fault = newIDTEntry(&isr12, IST_ERROR);
+    idt.general_protection_fault = newIDTEntry(&isr13, IST_ERROR);
+    idt.page_fault = newIDTEntry(&isr14, IST_ERROR);
+    idt.reserved1 = newIDTEntry(&isr15, IST_NORMAL);
+    idt.x87_floating_point = newIDTEntry(&isr16, IST_NORMAL);
+    idt.alignment_check = newIDTEntry(&isr17, IST_ERROR);
+    idt.machine_check = newIDTEntry(&isr18, IST_NORMAL);
+    idt.simd_floating_point = newIDTEntry(&isr19, IST_NORMAL);
+    idt.reserved[0] = newIDTEntry(&isr20, IST_NORMAL);
+    idt.reserved[1] = newIDTEntry(&isr21, IST_NORMAL);
+    idt.reserved[2] = newIDTEntry(&isr22, IST_NORMAL);
+    idt.reserved[3] = newIDTEntry(&isr23, IST_NORMAL);
+    idt.reserved[4] = newIDTEntry(&isr24, IST_NORMAL);
+    idt.reserved[5] = newIDTEntry(&isr25, IST_NORMAL);
+    idt.reserved[6] = newIDTEntry(&isr26, IST_NORMAL);
+    idt.reserved[7] = newIDTEntry(&isr27, IST_NORMAL);
+    idt.reserved[8] = newIDTEntry(&isr28, IST_NORMAL);
+    idt.virtualization = newIDTEntry(&isr29, IST_NORMAL);
+    idt.security_exception = newIDTEntry(&isr30, IST_ERROR);
+    idt.reserved2 = newIDTEntry(&isr31, IST_NORMAL);
 
     for (i = 0; i < 224; i++) {
-        idt.isr[i] = newIDTEntry(NULL);
+        idt.isr[i] = newIDTEntry(NULL, IST_NORMAL);
     }
 
-    idt.isr[0] = newIDTEntry(&isr32); // Timer
-    idt.isr[1] = newIDTEntry(&isr33); // Keyboard Interrupt
+    idt.isr[0] = newIDTEntry(&isr32, IST_NORMAL); // Timer
+    idt.isr[1] = newIDTEntry(&isr33, IST_NORMAL); // Keyboard Interrupt
 }
 
 void idt_load() {

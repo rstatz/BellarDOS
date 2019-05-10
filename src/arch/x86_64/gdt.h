@@ -23,7 +23,7 @@ typedef struct GDTentry {
     uint16_t base_low;
     
     uint8_t base_mid;
-    GDTentry_access access: 8;
+    uint8_t access: 8;
     uint8_t limit_up: 4;
     uint8_t flags: 4;
     uint8_t base_up;
