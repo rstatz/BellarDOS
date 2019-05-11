@@ -30,7 +30,7 @@ def gen_isr() :
 
     s =  ("\n"
          "isr_normal:\n"
-#         "      call bpoint\n"
+         "      call bpoint\n"
 #         "      hlt\n"
          "      call interrupt_handler\n"
          "      pop rdi\n"

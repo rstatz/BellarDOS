@@ -20,32 +20,30 @@ typedef struct TSSdesc {
 
     uint32_t base_addr_up: 32;
 
-    uint8_t reserved_2: 8;
-    uint8_t zeros: 5;
-    uint32_t reserved_3: 19;
+    uint32_t reserved_2: 32;
 } __attribute__((packed)) TSSdesc;
 
 typedef struct TSS {
-    uint16_t io_base;
-    uint16_t reserved_io;
-    
-    uint64_t reserved_1;
-
-    uint64_t ist7;
-    uint64_t ist6;
-    uint64_t ist5;
-    uint64_t ist4;
-    uint64_t ist3;
-    uint64_t ist2;
-    uint64_t ist1;
+    uint64_t reserved_3;
+     
+    uint64_t rsp0; 
+    uint64_t rsp1;
+    uint64_t rsp2;
 
     uint64_t reserved_2;
 
-    uint64_t rsp2; 
-    uint64_t rsp1;
-    uint64_t rsp0;
+    uint64_t ist1;
+    uint64_t ist2;
+    uint64_t ist3;
+    uint64_t ist4;
+    uint64_t ist5;
+    uint64_t ist6;
+    uint64_t ist7;
 
-    uint64_t reserved_3;
+    uint64_t reserved_1;
+
+    uint16_t io_base;
+    uint16_t reserved_io;
 } __attribute__((packed)) TSS;
 
 void load_task_register(uint64_t);

@@ -262,6 +262,7 @@ global isr254
 global isr255
 
 isr_normal:
+      call bpoint
       call interrupt_handler
       pop rdi
       iretq

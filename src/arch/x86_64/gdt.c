@@ -69,7 +69,7 @@ GDTentry get_gdt_data_segment_entry() {
 void gdt_init() {
     TSSdesc ist = new_TSSdesc();
 
-    init_TSS(&gdt[3]);
+    init_TSS();
 
     gdt[0] = newGDTentry(0, 0, 0, 0);
     gdt[1] = get_gdt_code_segment_entry();
@@ -85,5 +85,5 @@ void gdt_load() {
     desc.base = (uint64_t)&gdt;
 
     asm volatile("lgdt %0" : : "m" (desc));
-    load_task_register(GDT_SIZE_BYTES - TSS_SIZE_BYTES);
+    load_task_register(24);
 }
