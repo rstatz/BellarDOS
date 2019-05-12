@@ -24,7 +24,7 @@ typedef struct TSSdesc {
 } __attribute__((packed)) TSSdesc;
 
 typedef struct TSS {
-    uint64_t reserved_3;
+    uint32_t reserved_3;
      
     uint64_t rsp0; 
     uint64_t rsp1;
@@ -42,8 +42,8 @@ typedef struct TSS {
 
     uint64_t reserved_1;
 
-    uint16_t io_base;
     uint16_t reserved_io;
+    uint16_t io_base;
 } __attribute__((packed)) TSS;
 
 void load_task_register(uint64_t);

@@ -31,14 +31,12 @@ void kmain() {
  
     splash();
 
+    gdt_init();
+    gdt_load();   
+
     pic_init();    
     idt_init();
     idt_load(255);
-
-//    BREAK;
-
-    gdt_init();
-    gdt_load();   
 
 //    BREAK;
 

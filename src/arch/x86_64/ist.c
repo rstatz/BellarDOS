@@ -7,12 +7,11 @@
 #define MASK_16 0xFFFF
 #define MASK_32 0xFFFFFFFF
 
-#define TSS_SIZE 0x68
-
 TSS tss;
 
 extern void* stack_ist1_top;
 extern void* stack_ist2_top;
+extern void* stack_rsp0_top;
 
 TSSdesc new_TSSdesc() {
     TSSdesc t;
@@ -24,12 +23,12 @@ TSSdesc new_TSSdesc() {
 
     t.g = 0;
     t.dpl = 0;
-    t.avl = 1;
+    t.avl = 0;
     t.type = 0b1001;
     t.present = 1;
 
-    t.seg_limit_low = (TSS_SIZE - 1) & MASK_16;
-    t.seg_limit_up = (TSS_SIZE >> 16) & MASK_4;
+    t.seg_limit_low = (sizeof(tss) - 1) & MASK_16;
+    t.seg_limit_up = (sizeof(tss) >> 16) & MASK_4;
 
     t.base_addr_up = (((uint64_t)(&tss)) >> 32) & MASK_32;
     t.base_addr_mup = (((uint64_t)(&tss)) >> 24) & MASK_8;
@@ -49,14 +48,16 @@ void init_TSS() {
     tss.reserved_2 = 0;
     tss.reserved_3 = 0;
 
-    tss.io_base = 0;
+    tss.io_base = sizeof(tss);
 
-    tss.rsp0 = 0;
+    tss.rsp0 = (uint64_t)&stack_rsp0_top;
     tss.rsp1 = 0;
     tss.rsp2 = 0;
 
-    tss.ist1 = (uint64_t)stack_ist1_top;
-    tss.ist2 = (uint64_t)stack_ist2_top;
+    tss.ist1 = (uint64_t)&stack_ist1_top;
+    tss.ist2 = (uint64_t)&stack_ist2_top;
+    
+//    BREAK;
 
     tss.ist3 = 0;
     tss.ist4 = 0;

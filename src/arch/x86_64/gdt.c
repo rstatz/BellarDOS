@@ -11,12 +11,13 @@
 #define GDT_SIZE_8BYTES (GDT_NUM_8 + (2 * GDT_NUM_16))
 #define GDT_SIZE_BYTES (GDT_SIZE_8BYTES * 8)
 
-#define TSS_SIZE_BYTES 16
+#define TSS_DESC_SIZE_BYTES 16
+#define TSS_DESC_BYTE_OFFSET 3 * sizeof(GDTentry)
 
 #define CODE_SEGMENT_FLAGS 0xC
 #define CODE_SEGMENT_ACCESS 0x9A
 
-#define DATA_SEGMENT_FLAGS 0x0
+#define DATA_SEGMENT_FLAGS 0xC
 #define DATA_SEGMENT_ACCESS 0x92
 
 GDTentry gdt[GDT_SIZE_8BYTES];
@@ -67,15 +68,15 @@ GDTentry get_gdt_data_segment_entry() {
 }
 
 void gdt_init() {
-    TSSdesc ist = new_TSSdesc();
+    TSSdesc tss_desc = new_TSSdesc();
 
     init_TSS();
 
     gdt[0] = newGDTentry(0, 0, 0, 0);
     gdt[1] = get_gdt_code_segment_entry();
     gdt[2] = get_gdt_data_segment_entry();
-    gdt[3] = ((GDTentry*)&ist)[0];
-    gdt[4] = ((GDTentry*)&ist)[1];
+    gdt[3] = ((GDTentry*)&tss_desc)[0];
+    gdt[4] = ((GDTentry*)&tss_desc)[1];
 }
 
 void gdt_load() {
@@ -85,5 +86,5 @@ void gdt_load() {
     desc.base = (uint64_t)&gdt;
 
     asm volatile("lgdt %0" : : "m" (desc));
-    load_task_register(24);
+    load_task_register(TSS_DESC_BYTE_OFFSET);
 }
