@@ -19,6 +19,9 @@
 
 #define IST_NORMAL 1
 #define IST_ERROR 2
+#define IST_GP 3
+#define IST_DF 4
+#define IST_PF 5
 
 extern void isr0();
 extern void isr1();
@@ -99,13 +102,13 @@ void idt_init() {
     idt.bound_range_exceeded = newIDTEntry(&isr5, IST_NORMAL);
     idt.invalid_opcode = newIDTEntry(&isr6, IST_NORMAL);
     idt.device_not_available = newIDTEntry(&isr7, IST_NORMAL);
-    idt.double_fault = newIDTEntry(&isr8, IST_ERROR);
+    idt.double_fault = newIDTEntry(&isr8, IST_DF);
     idt.coproc_seg_overrun = newIDTEntry(&isr9, IST_NORMAL);
     idt.invalid_tss = newIDTEntry(&isr10, IST_ERROR);
     idt.segment_not_present = newIDTEntry(&isr11, IST_ERROR);
     idt.stack_segment_fault = newIDTEntry(&isr12, IST_ERROR);
-    idt.general_protection_fault = newIDTEntry(&isr13, IST_ERROR);
-    idt.page_fault = newIDTEntry(&isr14, IST_ERROR);
+    idt.general_protection_fault = newIDTEntry(&isr13, IST_GP);
+    idt.page_fault = newIDTEntry(&isr14, IST_PF);
     idt.reserved1 = newIDTEntry(&isr15, IST_NORMAL);
     idt.x87_floating_point = newIDTEntry(&isr16, IST_NORMAL);
     idt.alignment_check = newIDTEntry(&isr17, IST_ERROR);

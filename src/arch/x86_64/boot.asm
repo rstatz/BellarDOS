@@ -4,6 +4,10 @@ extern long_mode_start
 
 global stack_ist1_top
 global stack_ist2_top
+global stack_ist3_top
+global stack_ist4_top
+global stack_ist5_top
+
 global stack_rsp0_top
 
 section .rodata
@@ -172,6 +176,18 @@ stack_ist1_top:
 stack_ist2:
     resb 4096
 stack_ist2_top:
+
+stack_ist3:
+    resb 4096
+stack_ist3_top:
+
+stack_ist4:
+    resb 4096
+stack_ist4_top:
+
+stack_ist5:
+    resb 4096
+stack_ist5_top:
 
 stack_rsp0:
     resb 4096

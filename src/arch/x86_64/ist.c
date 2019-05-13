@@ -11,6 +11,10 @@ TSS tss;
 
 extern void* stack_ist1_top;
 extern void* stack_ist2_top;
+extern void* stack_ist3_top;
+extern void* stack_ist4_top;
+extern void* stack_ist5_top;
+
 extern void* stack_rsp0_top;
 
 TSSdesc new_TSSdesc() {
@@ -56,12 +60,9 @@ void init_TSS() {
 
     tss.ist1 = (uint64_t)&stack_ist1_top;
     tss.ist2 = (uint64_t)&stack_ist2_top;
-    
-//    BREAK;
-
-    tss.ist3 = 0;
-    tss.ist4 = 0;
-    tss.ist5 = 0;
+    tss.ist3 = (uint64_t)&stack_ist3_top;
+    tss.ist4 = (uint64_t)&stack_ist4_top;
+    tss.ist5 = (uint64_t)&stack_ist5_top;
     tss.ist6 = 0;
     tss.ist7 = 0;
 }
