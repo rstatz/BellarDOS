@@ -13,7 +13,7 @@ grub_cfg=$(path)/grub.cfg
 C_FLAGS=-ffreestanding -mno-red-zone -Wall -Wextra -g -c
 
 C_FILES=$(wildcard $(path)/*.c)
-C_OBJ=kmain.o vga_cd.o ps2_cd.o strings.o math.o print.o splash.o pic_cd.o gdt.o ist.o idt.o debug.o
+C_OBJ=kmain.o irq.o vga_cd.o ps2_cd.o serial_cd.o strings.o math.o print.o splash.o pic_cd.o gdt.o ist.o idt.o debug.o
 ASM_OBJ=multiboot_header.o boot.o long_mode_init.o isr.o
 
 LIBS= -nostdlib -lgcc
@@ -41,6 +41,7 @@ $(kernel): $(ASM_OBJ) $(linker_script) $(C_FILES)
 	mkdir -p $(OS)/boot/grub
 	cp $(grub_cfg) $(OS)/boot/grub/grub.cfg
 	$(CC) -o debug.o $(C_FLAGS) $(path)/debug.c $(LIBS)
+	$(CC) -o irq.o $(C_FLAGS) $(path)/irq.c $(LIBS)
 	$(CC) -o gdt.o $(C_FLAGS) $(path)/gdt.c $(LIBS)
 	$(CC) -o ist.o $(C_FLAGS) $(path)/ist.c $(LIBS)
 	$(CC) -o splash.o $(C_FLAGS) $(path)/splash.c $(LIBS)
@@ -50,6 +51,7 @@ $(kernel): $(ASM_OBJ) $(linker_script) $(C_FILES)
 	$(CC) -o pic_cd.o $(C_FLAGS) $(path)/pic_cd.c $(LIBS)
 	$(CC) -o vga_cd.o $(C_FLAGS) $(path)/vga_cd.c $(LIBS)
 	$(CC) -o ps2_cd.o $(C_FLAGS) $(path)/ps2_cd.c $(LIBS)
+	$(CC) -o serial_cd.o $(C_FLAGS) $(path)/serial_cd.c $(LIBS)
 	$(CC) -o idt.o $(C_FLAGS) $(path)/idt.c $(LIBS)
 	$(CC) -o kmain.o $(C_FLAGS) $(path)/kmain.c $(LIBS)
 	$(CCLINKER) -n -T $(linker_script) -o $(kernel) $(ASM_OBJ) $(C_OBJ)

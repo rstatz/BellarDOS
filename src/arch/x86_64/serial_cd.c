@@ -2,6 +2,8 @@
 
 #include "serial_cd.h"
 #include "io.h"
+#include "irq.h"
+#include "pic_cd.h"
 
 #define DLAB_MASK 0x80
 
@@ -23,7 +25,7 @@
 #define PARITY_ODD 0x08
 #define PARITY_EVEN 0x18
 #define PARITY PARITY_NONE
-#define PARITY_MASK 0x38
+#define PAR_MASK 0x38
 
 #define FIFO_CTRL_CFG 0xC7
 
@@ -44,6 +46,8 @@
 // Line Status Register Bits
 #define LS_DATA_READY 0x01
 #define LS_THRE 0x20
+
+#define IRQ_LINE_COM1 4
 
 serial_buff s_buff;
 
@@ -87,39 +91,66 @@ void SER_int_disable() {
 void SER_init() {
     SER_int_disable();
 
-    s_buff.head = &s_buff.buff;
-    s_buff.tail = &s_buff.buff;
+    s_buff.head = &s_buff.buff[0];
+    s_buff.tail = &s_buff.buff[0];
     s_buff.next = &s_buff.buff[1];
 
     SER_set_divisor(BAUD_DIVISOR);
     SER_configure_lc(BITWIDTH, STOP_BITS, PARITY);
     outb(COM1_FIFO_CTRL, FIFO_CTRL_CFG);
     SER_int_enable(SER_INT_SUPPORTED); // Double check this is correct interrupt
+
+    IRQ_clear_mask(IRQ_LINE_COM1);
 }
 
 int is_tx_empty() {
     return inb(COM1_LS) & LS_THRE;
 }
 
-int SER_tx(char data) {
-    if (is_tx_empty())
-        outb(COM1_DATA, data);
-}
-
 int SER_write(char data) {
+    int disabled_ints = 0;
+    
+    if (irq_enabled()) {
+        disabled_ints = 1;
+        CLI;
+    }
+  
     if (s_buff.head == s_buff.next)
-        return -1;
-
-    // INTERRUPT GATE
+        return 0;    
 
     *s_buff.tail = data;
     s_buff.tail = s_buff.next;
     s_buff.next++;
 
-    if (s_buff.next > s_buff.buff[SERIAL_BUFF_SIZE])
-        s_buff.next = &s_buff.buff;
+    if (s_buff.next > &s_buff.buff[SERIAL_BUFF_SIZE])
+        s_buff.next = &s_buff.buff[0];
 
-    // Transmit Data
+    if (disabled_ints)
+        STI;
 
     return 1;
+}
+
+void SER_write_str(const char* str) {
+    int i = 0;
+
+    while (str[i] != '\0')
+        SER_write(str[i]);        
+}
+
+void SER_tx(unsigned char data) {
+    if (is_tx_empty()) //CHECK EMPTY?
+        outb(COM1_DATA, data);
+}
+
+void IRQ_SER_tx() {
+    if (s_buff.head == s_buff.next)
+        return;
+
+    SER_tx((unsigned char)*s_buff.head);
+    
+    s_buff.head++;
+    
+    if (s_buff.head > &s_buff.buff[SERIAL_BUFF_SIZE])
+        s_buff.head = &s_buff.buff[0];
 }

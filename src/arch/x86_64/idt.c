@@ -14,9 +14,6 @@
 #define MASK_32 0x00000000FFFFFFFF
 #define MASK_16 0x0000FFFF
 
-#define IDT_SIZE 256
-#define IDT_SIZE_BYTES (IDT_SIZE * 16)
-
 #define IST_NORMAL 0
 #define IST_ERROR 0
 #define IST_GP 0
@@ -57,6 +54,8 @@ extern void isr30();
 extern void isr31();
 extern void isr32();
 extern void isr33();
+
+extern void isr36();
 
 extern void isr_unsupported();
 
@@ -133,12 +132,13 @@ void idt_init() {
 
     idt.isr[0] = newIDTEntry(&isr32, IST_NORMAL); // Timer
     idt.isr[1] = newIDTEntry(&isr33, IST_NORMAL); // Keyboard Interrupt
+    idt.isr[4] = newIDTEntry(&isr36, IST_NORMAL); // Serial Output
 }
 
 void idt_load() {
     IDTref ref;
 
-    ref.limit = IDT_SIZE_BYTES - 1;
+    ref.limit = sizeof(idt) - 1;
     ref.base = (uint64_t)&idt;
 
     asm volatile ("lidt %0" : : "m" (ref));
@@ -148,28 +148,4 @@ void IRQ_set_handler(int irq, isr_t isr, void* idtaddr) {
     IDTEntry* idt = (IDTEntry*)idtaddr;
 
     IRQ_set_handler_entry(idt[irq], isr);
-}
-
-void interrupt_handler(int irq) {
-    PIC_sendEOI(irq - 32);
-
-//    printk("Interrupt %d\n", irq);
-
-    switch(irq) {
-        case(33) :
-            IRQ_keyboard_handler();
-            break;
-        default :
-            printk("UNSUPPORTED INTERRUPT: %d\n", irq);
-    }
-}
-
-void interrupt_handler_err(int irq, int err) {
-    PIC_sendEOI(irq);
-
-    printk("Interrupt #%d\n", irq);
-    printk("Error Code %d\n", err);
-    BREAK;
-    if (irq == 13)
-        BREAK;
 }

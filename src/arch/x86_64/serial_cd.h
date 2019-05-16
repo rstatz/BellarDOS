@@ -5,11 +5,15 @@
 
 typedef struct serial_buff {
     char buff[SERIAL_BUFF_SIZE];
-    char *head, *tail;
+    char *head, *tail, *next;
 } serial_buff;
 
 void SER_init();
 
-int SER_write(const char*, int);
+int SER_write(char);
+
+void SER_write_str(const char*);
+
+void IRQ_SER_tx();
 
 #endif

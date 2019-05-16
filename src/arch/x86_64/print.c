@@ -1,7 +1,9 @@
 #include <stdint.h>
 #include <stdarg.h>
+
 #include "print.h"
 #include "vga_cd.h"
+#include "serial_cd.h"
 #include "math.h"
 
 #define INT_MXDGTS 10
@@ -299,8 +301,10 @@ int printk(const char* fmt, ...) {
                          return -1;
             }
         }
-        else
+        else {
             print_char(*s);
+            //SER_write(*s);
+        }
         
         s++;
     }

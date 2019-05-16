@@ -72,9 +72,6 @@ void VGA_display_char(unsigned char c) {
         disabled_ints = 1;
         CLI;
     }
-
-    if (irq_enabled())
-        CLI;
     
     if (cursor >= width*height)
         scroll();
