@@ -1,26 +1,27 @@
 #include <stdint.h>
 #include "gdt.h"
 #include "ist.h"
+#include "debug.h"
 
 #define MASK_4 0xF
 #define MASK_8 0xFF
 #define MASK_16 0xFFFF
 
-#define GDT_NUM_8 3
-#define GDT_NUM_16 1
-#define GDT_SIZE_8BYTES (GDT_NUM_8 + (2 * GDT_NUM_16))
-#define GDT_SIZE_BYTES (GDT_SIZE_8BYTES * 8)
+#define GDT_SIZE_BYTES sizeof(GDT)
 
 #define TSS_DESC_SIZE_BYTES 16
-#define TSS_DESC_BYTE_OFFSET 3 * sizeof(GDTentry)
+#define TSS_DESC_BYTE_OFFSET 2 * sizeof(GDTentry)
 
-#define CODE_SEGMENT_FLAGS 0xC
-#define CODE_SEGMENT_ACCESS 0x9A
+#define CODE_SEGMENT_LIMIT 0xFFFFFFFF
+#define CODE_SEGMENT_FLAGS 0x2
+#define CODE_SEGMENT_ACCESS 0x98
 
 #define DATA_SEGMENT_FLAGS 0xC
 #define DATA_SEGMENT_ACCESS 0x92
 
-GDTentry gdt[GDT_SIZE_8BYTES];
+GDT g_gdt;
+
+GDTdesc gdt_desc;
 
 /*GDTentry_access_byte new_GDTentry_access_byte(uint8_t rw, uint8_t exec) {
     GDTentry_access_byte a;
@@ -36,7 +37,7 @@ GDTentry gdt[GDT_SIZE_8BYTES];
     return a;
 }*/
 
-GDTentry newGDTentry(uint32_t limit, uint32_t base, uint8_t access, uint8_t flags) {
+GDTentry newGDTentry(uint32_t base, uint32_t limit, uint8_t access, uint8_t flags) {
     GDTentry e;
 
     e.limit_low = limit & MASK_16;
@@ -54,7 +55,7 @@ GDTentry newGDTentry(uint32_t limit, uint32_t base, uint8_t access, uint8_t flag
 GDTentry get_gdt_code_segment_entry() {
     GDTentry e;
 
-    e = newGDTentry(0, 0, CODE_SEGMENT_ACCESS, CODE_SEGMENT_FLAGS);
+    e = newGDTentry(0, CODE_SEGMENT_LIMIT, CODE_SEGMENT_ACCESS, CODE_SEGMENT_FLAGS);
 
     return e;
 }
@@ -72,19 +73,17 @@ void gdt_init() {
 
     init_TSS();
 
-    gdt[0] = newGDTentry(0, 0, 0, 0);
-    gdt[1] = get_gdt_code_segment_entry();
-    gdt[2] = get_gdt_data_segment_entry();
-    gdt[3] = ((GDTentry*)&tss_desc)[0];
-    gdt[4] = ((GDTentry*)&tss_desc)[1];
+    g_gdt.null_entry = 0;
+    g_gdt.code_segment_entry = get_gdt_code_segment_entry();
+    g_gdt.tss_desc = tss_desc;
 }
 
 void gdt_load() {
-    GDTdesc desc;
+//    BREAK;
 
-    desc.limit = GDT_SIZE_BYTES - 1;
-    desc.base = (uint64_t)&gdt;
+    gdt_desc.limit = GDT_SIZE_BYTES - 1;
+    gdt_desc.base = (uint64_t)&g_gdt;
 
-    asm volatile("lgdt %0" : : "m" (desc));
+    asm volatile("lgdt %0" : : "m" (gdt_desc));
     load_task_register(TSS_DESC_BYTE_OFFSET);
 }

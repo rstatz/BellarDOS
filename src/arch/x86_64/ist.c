@@ -14,8 +14,12 @@ extern void* stack_ist2_top;
 extern void* stack_ist3_top;
 extern void* stack_ist4_top;
 extern void* stack_ist5_top;
+extern void* stack_ist6_top;
+extern void* stack_ist7_top;
 
 extern void* stack_rsp0_top;
+extern void* stack_rsp1_top;
+extern void* stack_rsp2_top;
 
 TSSdesc new_TSSdesc() {
     TSSdesc t;
@@ -43,26 +47,26 @@ TSSdesc new_TSSdesc() {
 }
 
 void load_task_register(uint64_t tss_byte_offset) {
-    asm volatile("ltr %0" : : "m" (tss_byte_offset));
+    asm volatile("ltr %w0" : : "r" (tss_byte_offset));
 }
 
 void init_TSS() {
     tss.reserved_io = 0;
+    tss.reserved_0 = 0;
     tss.reserved_1 = 0;
     tss.reserved_2 = 0;
-    tss.reserved_3 = 0;
 
     tss.io_base = sizeof(tss);
 
     tss.rsp0 = (uint64_t)&stack_rsp0_top;
-    tss.rsp1 = 0;
-    tss.rsp2 = 0;
+    tss.rsp1 = (uint64_t)&stack_rsp1_top;
+    tss.rsp2 = (uint64_t)&stack_rsp2_top;
 
     tss.ist1 = (uint64_t)&stack_ist1_top;
     tss.ist2 = (uint64_t)&stack_ist2_top;
     tss.ist3 = (uint64_t)&stack_ist3_top;
     tss.ist4 = (uint64_t)&stack_ist4_top;
     tss.ist5 = (uint64_t)&stack_ist5_top;
-    tss.ist6 = 0;
-    tss.ist7 = 0;
+    tss.ist6 = (uint64_t)&stack_ist6_top;
+    tss.ist7 = (uint64_t)&stack_ist7_top;
 }

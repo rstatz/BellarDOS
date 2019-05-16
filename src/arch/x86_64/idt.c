@@ -17,11 +17,11 @@
 #define IDT_SIZE 256
 #define IDT_SIZE_BYTES (IDT_SIZE * 16)
 
-#define IST_NORMAL 1
-#define IST_ERROR 2
-#define IST_GP 3
-#define IST_DF 4
-#define IST_PF 5
+#define IST_NORMAL 0
+#define IST_ERROR 0
+#define IST_GP 0
+#define IST_DF 0
+#define IST_PF 0
 
 extern void isr0();
 extern void isr1();

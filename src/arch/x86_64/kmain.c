@@ -27,14 +27,17 @@ void kmain() {
 
     CLI; 
 
+    gdt_init();
+    gdt_load();
+
     VGA_init(VGA_COLOR_WHITE, VGA_COLOR_WHITE);
  
-    splash();
-
-    gdt_init();
-    gdt_load();   
+    splash();   
+    
+//    BREAK;
 
     pic_init();    
+
     idt_init();
     idt_load(255);
 
@@ -46,7 +49,7 @@ void kmain() {
 
     splash_end();
 
-    BREAK;
+//    BREAK;
 
     STI;
 

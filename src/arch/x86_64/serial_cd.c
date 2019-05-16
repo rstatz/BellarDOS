@@ -37,7 +37,7 @@
 #define COM1 0x3F8
 #define COM1_DATA COM1
 #define COM1_IE (COM1 + 1)
-#define COM1_FIFO_CTROL (COM1 + 2)
+#define COM1_FIFO_CTRL (COM1 + 2)
 #define COM1_LC (COM1 + 3)
 #define COM1_LS (COM1 + 5)
 

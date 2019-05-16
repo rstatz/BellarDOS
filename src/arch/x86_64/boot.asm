@@ -7,8 +7,12 @@ global stack_ist2_top
 global stack_ist3_top
 global stack_ist4_top
 global stack_ist5_top
+global stack_ist6_top
+global stack_ist7_top
 
 global stack_rsp0_top
+global stack_rsp1_top
+global stack_rsp2_top
 
 section .rodata
 gdt64:
@@ -189,9 +193,25 @@ stack_ist5:
     resb 4096
 stack_ist5_top:
 
+stack_ist6:
+    resb 4096
+stack_ist6_top:
+
+stack_ist7:
+    resb 4096
+stack_ist7_top:
+
 stack_rsp0:
     resb 4096
 stack_rsp0_top:
+
+stack_rsp1:
+    resb 4096
+stack_rsp1_top:
+
+stack_rsp2:
+    resb 4096
+stack_rsp2_top:
 
 stack_bottom:
     resb 4096

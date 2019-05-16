@@ -52,7 +52,7 @@ def gen_isr() :
     for i in range(0, 256) :
         if (isr_err[i] == 1) :
             s = ("isr%d:\n" %i +
-                 "      call bpoint\n"
+#                 "      call bpoint\n"
                  "      push rdi\n"
                  "      push rsi\n"
                  "      mov rdi, 0x%x\n" % i +
@@ -60,14 +60,14 @@ def gen_isr() :
                  "      jmp isr_err\n\n")
         else :
             s = ("isr%d:\n" % i +
-                 "      call bpoint\n"
+#                 "      call bpoint\n"
                  "      push rdi\n"
                  "      mov rdi, 0x%x\n" % i +
                  "      jmp isr_normal\n\n")
         f.write(s)
 
     s = ("isr_unsupported:\n"
-         "      call bpoint\n"
+#         "      call bpoint\n"
          "      push rdi\n"
          "      mov rdi, 255\n"
          "      jmp isr_normal\n\n")
