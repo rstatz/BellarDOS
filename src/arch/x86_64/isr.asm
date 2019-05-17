@@ -268,9 +268,8 @@ isr_normal:
 
 isr_err:
       call interrupt_handler_err
-      pop rsi
       pop rdi
-      add rbp, 8
+      pop rsi
       iretq
 
 isr0:
@@ -314,10 +313,10 @@ isr7:
       jmp isr_normal
 
 isr8:
-      push rdi
       push rsi
+      mov rsi, [rsp + 8]
+      push rdi
       mov rdi, 0x8
-      mov rsi, [rbp]
       jmp isr_err
 
 isr9:
@@ -326,38 +325,38 @@ isr9:
       jmp isr_normal
 
 isr10:
-      push rdi
       push rsi
+      mov rsi, [rsp + 8]
+      push rdi
       mov rdi, 0xa
-      mov rsi, [rbp]
       jmp isr_err
 
 isr11:
-      push rdi
       push rsi
+      mov rsi, [rsp + 8]
+      push rdi
       mov rdi, 0xb
-      mov rsi, [rbp]
       jmp isr_err
 
 isr12:
-      push rdi
       push rsi
+      mov rsi, [rsp + 8]
+      push rdi
       mov rdi, 0xc
-      mov rsi, [rbp]
       jmp isr_err
 
 isr13:
-      push rdi
       push rsi
+      mov rsi, [rsp + 8]
+      push rdi
       mov rdi, 0xd
-      mov rsi, [rbp]
       jmp isr_err
 
 isr14:
-      push rdi
       push rsi
+      mov rsi, [rsp + 8]
+      push rdi
       mov rdi, 0xe
-      mov rsi, [rbp]
       jmp isr_err
 
 isr15:
@@ -371,10 +370,10 @@ isr16:
       jmp isr_normal
 
 isr17:
-      push rdi
       push rsi
+      mov rsi, [rsp + 8]
+      push rdi
       mov rdi, 0x11
-      mov rsi, [rbp]
       jmp isr_err
 
 isr18:
@@ -438,10 +437,10 @@ isr29:
       jmp isr_normal
 
 isr30:
-      push rdi
       push rsi
+      mov rsi, [rsp + 8]
+      push rdi
       mov rdi, 0x1e
-      mov rsi, [rbp]
       jmp isr_err
 
 isr31:

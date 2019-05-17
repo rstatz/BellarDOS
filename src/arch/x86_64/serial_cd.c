@@ -13,7 +13,7 @@
 
 #define BITWIDTH_7 0x02
 #define BITWIDTH_8 0x03
-#define BITWIDTH BITWIDTH_7
+#define BITWIDTH BITWIDTH_8
 #define BITWIDTH_MASK 0x03
 
 #define ONE_STOP 0x00
@@ -39,7 +39,7 @@
 #define COM1 0x3F8
 #define COM1_DATA COM1
 #define COM1_IE (COM1 + 1)
-#define COM1_FIFO_CTRL (COM1 + 2)
+#define COM1_IIR (COM1 + 2)
 #define COM1_LC (COM1 + 3)
 #define COM1_LS (COM1 + 5)
 
@@ -97,7 +97,7 @@ void SER_init() {
 
     SER_set_divisor(BAUD_DIVISOR);
     SER_configure_lc(BITWIDTH, STOP_BITS, PARITY);
-    outb(COM1_FIFO_CTRL, FIFO_CTRL_CFG);
+    outb(COM1_IIR, FIFO_CTRL_CFG);
     SER_int_enable(SER_INT_SUPPORTED); // Double check this is correct interrupt
 
     IRQ_clear_mask(IRQ_LINE_COM1);
@@ -105,6 +105,11 @@ void SER_init() {
 
 int is_tx_empty() {
     return inb(COM1_LS) & LS_THRE;
+}
+
+void SER_tx(unsigned char data) {
+    if (is_tx_empty()) // CHECK EMPTY?
+        outb(COM1_DATA, data);
 }
 
 int SER_write(char data) {
@@ -117,6 +122,11 @@ int SER_write(char data) {
   
     if (s_buff.head == s_buff.next)
         return 0;    
+
+    if (s_buff.head == s_buff.tail) {
+        SER_tx(data);
+        return 1;
+    }
 
     *s_buff.tail = data;
     s_buff.tail = s_buff.next;
@@ -138,11 +148,6 @@ void SER_write_str(const char* str) {
         SER_write(str[i]);        
 }
 
-void SER_tx(unsigned char data) {
-    if (is_tx_empty()) //CHECK EMPTY?
-        outb(COM1_DATA, data);
-}
-
 void IRQ_SER_tx() {
     if (s_buff.head == s_buff.next)
         return;
@@ -153,4 +158,6 @@ void IRQ_SER_tx() {
     
     if (s_buff.head > &s_buff.buff[SERIAL_BUFF_SIZE])
         s_buff.head = &s_buff.buff[0];
+
+    inb(COM1_IIR);
 }

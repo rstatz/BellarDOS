@@ -6,6 +6,8 @@
 #define CLI asm("CLI")
 #define STI asm("STI")
 
+void gen_gpf();
+
 static inline uint16_t irq_enabled() {
     uint16_t flags;
 

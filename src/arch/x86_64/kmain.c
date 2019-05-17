@@ -9,6 +9,7 @@
 #include "ps2_cd.h"
 #include "serial_cd.h"
 #include "print.h"
+#include "irq.h"
 
 #include "splash.h"
 
@@ -40,7 +41,7 @@ void kmain() {
     // Device Initialization
     pic_init();
     ps2_init();
-    SER_init();
+//    SER_init();
 
     // Splash End
     delay_cycles(SPLASH_DELAY);
@@ -50,7 +51,9 @@ void kmain() {
 
     STI;
 
-    SER_write_str("Hello World\n");
+    gen_gpf();
+
+//    SER_write_str("Hello World\n");
 
     while(1) {
 //        delay_cycles(PULSE_DELAY);

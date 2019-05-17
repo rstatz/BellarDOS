@@ -31,21 +31,15 @@ def gen_isr() :
     s =  ("\n"
          "isr_normal:\n"
 #         "      call bpoint\n"
-#         "      hlt\n"
          "      call interrupt_handler\n"
          "      pop rdi\n"
-#         "      sti\n"
          "      iretq\n"
          "\n"
          "isr_err:\n"
 #         "      call bpoint\n"
-#         "      hlt\n"
          "      call interrupt_handler_err\n"
-         "      pop rsi\n"
          "      pop rdi\n"
-         "      add rbp, 8\n"
-#         "      mov rsp, rbp\n"
-#         "      sti\n"
+         "      pop rsi\n"
          "      iretq\n\n")
     f.write(s)
 
@@ -53,10 +47,10 @@ def gen_isr() :
         if (isr_err[i] == 1) :
             s = ("isr%d:\n" %i +
 #                 "      call bpoint\n"
-                 "      push rdi\n"
                  "      push rsi\n"
+                 "      mov rsi, [rsp + 8]\n"
+                 "      push rdi\n"
                  "      mov rdi, 0x%x\n" % i +
-                 "      mov rsi, [rbp]\n"
                  "      jmp isr_err\n\n")
         else :
             s = ("isr%d:\n" % i +
@@ -75,3 +69,4 @@ def gen_isr() :
 
 if __name__ == "__main__":
     gen_isr() 
+

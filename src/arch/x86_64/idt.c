@@ -14,11 +14,11 @@
 #define MASK_32 0x00000000FFFFFFFF
 #define MASK_16 0x0000FFFF
 
-#define IST_NORMAL 0
-#define IST_ERROR 0
-#define IST_GP 0
-#define IST_DF 0
-#define IST_PF 0
+#define IST_NORMAL 1
+#define IST_ERROR 2
+#define IST_GP 3
+#define IST_DF 4
+#define IST_PF 5
 
 extern void isr0();
 extern void isr1();
