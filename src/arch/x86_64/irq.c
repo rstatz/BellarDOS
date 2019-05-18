@@ -11,8 +11,6 @@ void interrupt_handler(int irq) {
 //    BREAK;
     PIC_sendEOI(irq - 32);
 
-//    printk("Interrupt %d\n", irq);
-
     switch(irq) {
         case(33) :
             IRQ_keyboard_handler();
@@ -21,7 +19,7 @@ void interrupt_handler(int irq) {
             IRQ_SER_tx();
             break;
         default :
-            printk("UNSUPPORTED INTERRUPT: %d\n", irq);
+            printk("UNSUPPORTED INTERRUPT: IRQ %d\n", irq);
             break;
     }
 }

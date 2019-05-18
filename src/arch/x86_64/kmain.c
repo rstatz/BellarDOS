@@ -36,29 +36,28 @@ void kmain() {
 
     // Splash Start
     VGA_init(VGA_COLOR_WHITE, VGA_COLOR_WHITE);
-    splash();    
+    splash();   
 
     // Device Initialization
     pic_init();
     ps2_init();
-//    SER_init();
+    SER_init();
 
     // Splash End
     delay_cycles(SPLASH_DELAY);
     splash_end();
 
-//    BREAK;
+    BREAK;
 
     STI;
 
-    gen_gpf();
+//    gen_gpf();
 
-//    SER_write_str("Hello World\n");
+//    SER_write('W');
+
+    SER_write_str("Hello World\n");
 
     while(1) {
-//        delay_cycles(PULSE_DELAY);
-//        printk(".");
-//        ps2_poll_keyboard();
         asm("hlt");
     }
 }

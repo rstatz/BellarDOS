@@ -4,6 +4,7 @@
 #include "strings.h"
 #include "vga_cd.h"
 #include "irq.h"
+#include "debug.h"
 
 #define VGA_BASE 0xb8000
 

@@ -143,12 +143,12 @@ void ps2_read_keyboard(uint8_t c) {
             if ((c = charset[c]) == 0)
                 break;
                 
-        printk("%c", c);
+            printk("%c", c);
 
-        if (c == '\n' || c == '\r')
-            printk(SHELL_PROMPT);
+            if (c == '\n' || c == '\r')
+                printk(SHELL_PROMPT);
 
-        break;
+            break;
     }
 }
 

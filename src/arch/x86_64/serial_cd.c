@@ -4,6 +4,7 @@
 #include "io.h"
 #include "irq.h"
 #include "pic_cd.h"
+#include "debug.h"
 
 #define DLAB_MASK 0x80
 
@@ -27,7 +28,7 @@
 #define PARITY PARITY_NONE
 #define PAR_MASK 0x38
 
-#define FIFO_CTRL_CFG 0xC7
+#define FIFO_CTRL_CFG 0x87
 
 #define INT_DATA_AVAIL 0x01
 #define INT_TRANS_EMPTY 0x02
@@ -69,15 +70,15 @@ void SER_set_divisor(uint16_t div) {
 }
 
 void SER_configure_lc(uint8_t bw, uint8_t stop, uint8_t par) {
-    char lc, lc_new;
+    char lc;
 
     lc = inb(COM1_LC);
 
-    lc_new = ((lc & ~BITWIDTH_MASK) | bw);
-    lc_new = ((lc & ~STOP_MASK) | stop);
-    lc_new = ((lc & ~PAR_MASK) | par);
+    lc = ((lc & ~BITWIDTH_MASK) | bw);
+    lc = ((lc & ~STOP_MASK) | stop);
+    lc = ((lc & ~PAR_MASK) | par);
 
-    outb(COM1_LC, lc_new);
+    outb(COM1_LC, lc);
 }
 
 void SER_int_enable(uint8_t ie) {
@@ -90,15 +91,16 @@ void SER_int_disable() {
 
 void SER_init() {
     SER_int_disable();
+//    BREAK;
 
-    s_buff.head = &s_buff.buff[0];
-    s_buff.tail = &s_buff.buff[0];
-    s_buff.next = &s_buff.buff[1];
+    s_buff.head = &(s_buff.buff[0]);
+    s_buff.tail = &(s_buff.buff[0]);
+    s_buff.next = &(s_buff.buff[1]);
 
     SER_set_divisor(BAUD_DIVISOR);
     SER_configure_lc(BITWIDTH, STOP_BITS, PARITY);
     outb(COM1_IIR, FIFO_CTRL_CFG);
-    SER_int_enable(SER_INT_SUPPORTED); // Double check this is correct interrupt
+    SER_int_enable(SER_INT_SUPPORTED); 
 
     IRQ_clear_mask(IRQ_LINE_COM1);
 }
@@ -108,23 +110,30 @@ int is_tx_empty() {
 }
 
 void SER_tx(unsigned char data) {
-    if (is_tx_empty()) // CHECK EMPTY?
+    if (is_tx_empty()) 
         outb(COM1_DATA, data);
 }
 
 int SER_write(char data) {
     int disabled_ints = 0;
-    
+
     if (irq_enabled()) {
         disabled_ints = 1;
         CLI;
     }
-  
-    if (s_buff.head == s_buff.next)
+    
+    // Check Buffer Full  
+    if (s_buff.head == s_buff.next) {
+        if(disabled_ints)
+            STI;
         return 0;    
+    }
 
+    // Check Buffer Empty
     if (s_buff.head == s_buff.tail) {
         SER_tx(data);
+        if(disabled_ints)
+            STI;
         return 1;
     }
 
@@ -132,7 +141,7 @@ int SER_write(char data) {
     s_buff.tail = s_buff.next;
     s_buff.next++;
 
-    if (s_buff.next > &s_buff.buff[SERIAL_BUFF_SIZE])
+    if (s_buff.next == &s_buff.buff[SERIAL_BUFF_SIZE])
         s_buff.next = &s_buff.buff[0];
 
     if (disabled_ints)
@@ -145,19 +154,21 @@ void SER_write_str(const char* str) {
     int i = 0;
 
     while (str[i] != '\0')
-        SER_write(str[i]);        
+        SER_write(str[i++]);
 }
 
 void IRQ_SER_tx() {
-    if (s_buff.head == s_buff.next)
+    // Check Buffer Empty
+    if (s_buff.head == s_buff.tail)
         return;
 
     SER_tx((unsigned char)*s_buff.head);
     
     s_buff.head++;
     
-    if (s_buff.head > &s_buff.buff[SERIAL_BUFF_SIZE])
+    if (s_buff.head == &s_buff.buff[SERIAL_BUFF_SIZE])
         s_buff.head = &s_buff.buff[0];
 
+    // Reads IIR to reset serial interrupt state
     inb(COM1_IIR);
 }
