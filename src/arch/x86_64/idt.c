@@ -9,7 +9,7 @@
 #define NULL 0
 
 #define TARG_SEL 0x8
-#define GATE_TYPE 0xE
+#define GATE_TYPE 0xE // Interrupt Gate
 
 #define MASK_32 0x00000000FFFFFFFF
 #define MASK_16 0x0000FFFF

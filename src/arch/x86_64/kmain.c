@@ -34,8 +34,7 @@ void kmain() {
     idt_init();
     idt_load();
 
-    // Splash Start
-    VGA_init(VGA_COLOR_WHITE, VGA_COLOR_WHITE);
+    // Splash and VGA init
     splash();   
 
     // Device Initialization
@@ -47,15 +46,11 @@ void kmain() {
     delay_cycles(SPLASH_DELAY);
     splash_end();
 
-    BREAK;
+//    BREAK;
 
     STI;
 
 //    gen_gpf();
-
-//    SER_write('W');
-
-    SER_write_str("Hello World\n");
 
     while(1) {
         asm("hlt");

@@ -109,9 +109,13 @@ int is_tx_empty() {
     return inb(COM1_LS) & LS_THRE;
 }
 
-void SER_tx(unsigned char data) {
-    if (is_tx_empty()) 
+int SER_tx(unsigned char data) {
+    if (is_tx_empty()) {
         outb(COM1_DATA, data);
+        return 1;
+    }
+
+    return 0;
 }
 
 int SER_write(char data) {
@@ -126,7 +130,7 @@ int SER_write(char data) {
     if (s_buff.head == s_buff.next) {
         if(disabled_ints)
             STI;
-        return 0;    
+        return 0;
     }
 
     // Check Buffer Empty
@@ -141,7 +145,7 @@ int SER_write(char data) {
     s_buff.tail = s_buff.next;
     s_buff.next++;
 
-    if (s_buff.next == &s_buff.buff[SERIAL_BUFF_SIZE])
+    if (s_buff.next >= &s_buff.buff[SERIAL_BUFF_SIZE])
         s_buff.next = &s_buff.buff[0];
 
     if (disabled_ints)
@@ -166,7 +170,7 @@ void IRQ_SER_tx() {
     
     s_buff.head++;
     
-    if (s_buff.head == &s_buff.buff[SERIAL_BUFF_SIZE])
+    if (s_buff.head >= &s_buff.buff[SERIAL_BUFF_SIZE])
         s_buff.head = &s_buff.buff[0];
 
     // Reads IIR to reset serial interrupt state

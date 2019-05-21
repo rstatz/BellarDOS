@@ -122,4 +122,5 @@ void pic_init() {
     pic_remap(VEC_OFFSET1, VEC_OFFSET2);    
 
     IRQ_set_mask(IRQLINE_TIMER);
+    
 }

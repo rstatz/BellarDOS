@@ -35,10 +35,10 @@ $(OS): $(kernel) $(grub_cfg)
 	rm *.o
 
 run: $(OS).img
-	qemu-system-x86_64 -d int -s -drive format=raw,file=$(OS).img -serial stdio
-
-run_serial: $(OS).img
 	qemu-system-x86_64 -s -drive format=raw,file=$(OS).img -serial stdio
+
+run_debug: $(OS).img
+	qemu-system-x86_64 -d int -s -drive format=raw,file=$(OS).img -serial stdio
 
 
 $(kernel): $(ASM_OBJ) $(linker_script) $(C_FILES)

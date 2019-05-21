@@ -25,17 +25,20 @@
 // %c
 void print_char(char c) {
     VGA_display_char(c);
-    SER_write((unsigned char)c);
+
+     SER_write((unsigned char)c);
 }
 
 // %s
 void print_str(const char* str) {
     VGA_display_str((unsigned char*)str);
-    SER_write_str(str);
+
+     SER_write_str(str);
 }
 
 void print_uchar(unsigned char c) {
     VGA_display_char(c);
+
     SER_write(c);
 }
 
