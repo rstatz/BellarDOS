@@ -45,7 +45,7 @@ void kmain(PML4_ref pml, void* mb_tag) {
 
     // Memory Setup
 //    BREAK;    
-    mmap(pml, mb_tag);
+    MMU_setup(pml, mb_tag);
 
     // Splash End
     delay_cycles(SPLASH_DELAY);

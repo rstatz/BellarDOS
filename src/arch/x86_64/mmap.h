@@ -34,11 +34,11 @@ typedef struct MB_tag_boot_cmd {
     uint32_t cmd_line;
 } __attribute__((packed)) MB_tag_boot_cmd;
 
-typedef struct MB_tag_boot_loader {
+typedef struct MB_tag_bootloader {
     uint32_t tag_type;
     uint32_t tag_size;
     uint32_t bootloader_name;
-} __attribute__((packed)) MB_tag_boot_loader;
+} __attribute__((packed)) MB_tag_bootloader;
 
 typedef struct MB_tag_mmap {
     uint32_t tag_type;
@@ -122,7 +122,7 @@ typedef struct PTE {
     uint8_t nx: 1;
 } __attribute__((packed)) PT_entry;
 
-void mmap(PML4_ref, void*);
+void MMU_setup(PML4_ref, void*);
 
 void* MMU_pf_alloc();
 
