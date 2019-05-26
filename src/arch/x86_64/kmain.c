@@ -3,6 +3,7 @@
 #include "gdt.h"
 #include "idt.h"
 #include "irq.h"
+#include "mmap.h"
 
 #include "pic_cd.h"
 #include "vga_cd.h"
@@ -25,7 +26,7 @@ void delay_cycles(unsigned int i) {
         c++;
 }
 
-void kmain() {    
+void kmain(PML4_ref pml, void* mb_tag) {    
     CLI; 
 
     // x86_64 Setup
@@ -41,6 +42,10 @@ void kmain() {
     pic_init();
     ps2_init();
     SER_init();
+
+    // Memory Setup
+//    BREAK;    
+    mmap(pml, mb_tag);
 
     // Splash End
     delay_cycles(SPLASH_DELAY);

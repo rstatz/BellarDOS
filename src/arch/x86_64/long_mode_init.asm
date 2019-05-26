@@ -5,6 +5,8 @@ bits 64
 extern kmain
 
 long_mode_start:
+    pop rsi
+
     ; load 0 to all data segment registers
     mov ax, 0
     mov ss, ax
@@ -16,6 +18,10 @@ long_mode_start:
     ; print okay
     mov rax, 0x2f592f412f4b2f4f
     mov qword [0xb8000], rax
+
+    ; passes items for mem management
+    mov rdi, cr3
+;    mov rsi, rbx
 
     call kmain
 

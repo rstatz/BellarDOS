@@ -31,6 +31,8 @@ start:
     ; set stack address
     mov esp, stack_top
 
+    push ebx
+
     call check_multiboot
     call check_cpuid
     call check_long_mode
@@ -169,8 +171,6 @@ p4_table:
 p3_table:
     resb 4096
 p2_table:
-    resb 4096
-p1_table:
     resb 4096
 
 stack_ist1:
