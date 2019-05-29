@@ -15,9 +15,55 @@
 #define MMAP_TAG_SIZE 16
 #define ELF_SYMBL_TAG_SIZE 20
 
+mem_map mmap;
+
+void find_avl_mem(mem_region r) {
+    uint64_t ubase, uend, base, end;
+    uint32_t i;
+    mem_region temp, *new;
+
+    base = r.base_addr;
+    end = base + r.length - 1;
+
+    for (i = 0; i < mmap.num_unavl; i++) {
+        ubase = mmap.mem_unavl[i].base_addr;
+        uend = ubase + mmap.mem_unavl[i].length - 1;
+        
+//        BREAK;
+        
+        if ((base >= ubase) && (end <= uend))
+            return;
+
+        if ((base < ubase) && (end > uend)) {
+            temp.base_addr = base;
+            temp.length = ubase - base;
+            find_avl_mem(temp);
+
+            temp.base_addr = uend + 1;
+            temp.length = end - uend;
+            find_avl_mem(temp);
+
+            return;
+        }
+
+        if ((base <= uend) && (end > uend))
+            base = uend + 1;
+
+        if ((end >= ubase) && (base < ubase))
+            end = ubase - 1;
+    }
+    
+    printk("Available memory from %p to %p\n", (void*)base, (void*)end);
+
+    new = &mmap.mem_avl[mmap.num_avl];
+    new->base_addr = base;
+    new->length = end - base + 1;
+    mmap.num_avl++;
+}
+
 void parse_tag_mmap(void* mmap_tag) {
-    int i, num_info;    
-    MB_tag_mmap mem_header;
+    uint32_t i, num_info;    
+    MB_tag_mmap* mem_header;
     MB_mem_info* mem;
 
     if (mmap_tag == NULL) {
@@ -25,37 +71,51 @@ void parse_tag_mmap(void* mmap_tag) {
         return;
     }
 
-    mem_header = *(MB_tag_mmap*)mmap_tag;
-    mem = (MB_mem_info*)(&(mem_header.mem_info_entries));
-    num_info = (mem_header.tag_size - MMAP_TAG_SIZE) / mem_header.mem_info_size;
-//    BREAK;
+    mem_header = (MB_tag_mmap*)mmap_tag;
+    mem = mem_header->mem_info_entries;
+    num_info = (mem_header->tag_size - MMAP_TAG_SIZE) / mem_header->mem_info_size;
+
     for (i = 0; i < num_info; i++) {
-        printk("Mem Region Type %d\n", mem[i].type);
-        if (mem[i].type == 1) {
-            printk("Available Mem Region Found at %p\n", (void*)mem[i].start_addr);
+        printk("Checking mem region between %p and %p\n", 
+            (void*)mem[i].region.base_addr, 
+            (void*)(mem[i].region.base_addr + mem[i].region.length - 1));
+        
+        if ((mem[i].type == 1)) {
+            printk("Type 1  mem region at %p\n", (void*)mem[i].region.base_addr);
+            find_avl_mem(mem[i].region);
         }
     }
 }
 
 void parse_tag_elf_symbols(void* elf_tag) {
-    int i, num_sects;
-    MB_tag_elf_symbols elf_header;
+    uint32_t i, num_sects;
+    MB_tag_elf_symbols* elf_header;
     MB_elf_sect_header* sects;
-    char *name, *str_table;
+    mem_region region;
+//    char *name, *str_table;
 
     if (elf_tag == NULL) {
         printk("Multiboot elf symbols tag not found\n");
         return;
     }
 
-    elf_header = *(MB_tag_elf_symbols*)elf_tag;
-    sects = (MB_elf_sect_header*)(&(elf_header.sect_head_array));
-    num_sects = (elf_header.tag_size - ELF_SYMBL_TAG_SIZE) / elf_header.sect_head_size;
-    str_table = (char*)elf_header.index_str_table_sect;
+    elf_header = (MB_tag_elf_symbols*)elf_tag;
+    sects = (MB_elf_sect_header*)(&(elf_header->sect_head_array));
+    num_sects = elf_header->num_sect_head_entries;
+//    str_table = (char*)elf_header->index_str_table_sect;
 
     for (i = 0; i < num_sects; i++) {
-        name = &str_table[sects[i].sect_name_index];
-        printk("Found ELF sect: %s\n", name);
+        region.base_addr = sects[i].seg_addr;
+        region.length = sects[i].seg_size;
+
+        if (region.length != 0) {
+            printk("Unavailable mem region between %p and %p\n", 
+                (void*)(sects[i].seg_addr), 
+                (void*)(sects[i].seg_addr + sects[i].seg_size));
+
+            mmap.mem_unavl[mmap.num_unavl] = region;
+            mmap.num_unavl++;
+        }
     }
 }
 
@@ -108,8 +168,14 @@ void parse_mb_tags(void* tag) {
     parse_tag_mmap(mem);
 }
 
+void init_mmap() {
+    mmap.num_avl = 0;
+    mmap.num_unavl = 0;
+}
+
 void MMU_setup(PML4_ref pml, void* tag) {
     printk("Tag address: %p\n", tag);
     printk("Header size: %d\n", ((MB_tag_header*)tag)->tag_size);
+    init_mmap();
     parse_mb_tags(tag);
 }

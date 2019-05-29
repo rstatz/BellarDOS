@@ -40,20 +40,31 @@ typedef struct MB_tag_bootloader {
     uint32_t bootloader_name;
 } __attribute__((packed)) MB_tag_bootloader;
 
+typedef struct mem_region {
+    uint64_t base_addr;
+    uint64_t length;
+} __attribute__((packed)) mem_region;
+
+typedef struct MB_mem_info {
+    mem_region region;
+    uint32_t type;
+    uint32_t reserved;
+} __attribute__((packed)) MB_mem_info;
+
 typedef struct MB_tag_mmap {
     uint32_t tag_type;
     uint32_t tag_size;
     uint32_t mem_info_size;
     uint32_t mem_info_vers;
-    uint32_t mem_info_entries;
+    MB_mem_info mem_info_entries[0];
 } __attribute__((packed)) MB_tag_mmap;
 
-typedef struct MB_mem_info {
-    uint64_t start_addr;
-    uint64_t length;
-    uint32_t type;
-    uint32_t reserved;
-} __attribute__((packed)) MB_mem_info;
+typedef struct mem_map {
+    uint32_t num_avl;
+    uint32_t num_unavl;
+    mem_region mem_avl[20];
+    mem_region mem_unavl[20];
+} mem_map;
 
 typedef struct MB_tag_elf_symbols {
     uint32_t tag_type;
