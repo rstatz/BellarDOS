@@ -60,10 +60,11 @@ typedef struct MB_tag_mmap {
 } __attribute__((packed)) MB_tag_mmap;
 
 typedef struct mem_map {
-    uint32_t num_avl;
-    uint32_t num_unavl;
+    uint32_t num_avl, num_unavl, curr_region;
     mem_region mem_avl[20];
     mem_region mem_unavl[20];
+    void *pg_last, *pgs_free;
+    uint64_t pgs_alloc, pgs_avl;
 } mem_map;
 
 typedef struct MB_tag_elf_symbols {
@@ -132,6 +133,10 @@ typedef struct PTE {
     uint16_t avl_hi: 11;
     uint8_t nx: 1;
 } __attribute__((packed)) PT_entry;
+
+typedef struct pf_header {
+    void* next;
+} pf_header;
 
 void MMU_setup(PML4_ref, void*);
 

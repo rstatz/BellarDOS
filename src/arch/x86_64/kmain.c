@@ -26,7 +26,7 @@ void delay_cycles(unsigned int i) {
         c++;
 }
 
-void kmain(PML4_ref pml, void* mb_tag) {    
+void kmain(PML4_ref pml, void* mb_tag) {
     CLI; 
 
     // x86_64 Setup
@@ -43,8 +43,7 @@ void kmain(PML4_ref pml, void* mb_tag) {
     ps2_init();
     SER_init();
 
-    // Memory Setup
-//    BREAK;    
+    // Memory Setup 
     MMU_setup(pml, mb_tag);
 
     // Splash End
