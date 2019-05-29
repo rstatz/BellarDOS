@@ -14,6 +14,7 @@
 
 #include "splash.h"
 
+#include "test.h"
 #include "debug.h"
 
 #define PULSE_DELAY 100000000
@@ -48,12 +49,18 @@ void kmain(PML4_ref pml, void* mb_tag) {
 
     // Splash End
     delay_cycles(SPLASH_DELAY);
+
+    // Testing
+    test_pf_alloc();
+    test_pf_alloc();
+
     splash_end();
 
 //    BREAK;
 
     STI;
 
+    // Interrupt Testing
 //    gen_gpf();
 
     while(1) {

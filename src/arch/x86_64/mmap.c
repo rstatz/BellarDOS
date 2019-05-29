@@ -187,9 +187,10 @@ int add_pf() {
     end = r.base_addr + r.length - 1;
 
     mmap.pg_last += PG_SIZE;
-BREAK;
+
     // check if room for a page in current region
-    while (mmap.pg_last >= (void*)end) {
+    while ((mmap.pg_last >= (void*)end) 
+            || ((mmap.pg_last + PG_SIZE) > (void*) end)) {
         mmap.curr_region++;
 
         if (mmap.curr_region == mmap.num_avl)
