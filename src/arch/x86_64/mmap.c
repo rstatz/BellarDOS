@@ -16,9 +16,6 @@
 #define ELF_SYMBL_TAG_SIZE 20
 
 #define PG_SIZE 4096
-#define DFLT_NUM_PGS 100
-
-mem_map mmap;
 
 void find_avl_mem(mem_map* mmap, mem_region r) {
     uint64_t ubase, uend, base, end;
@@ -52,8 +49,8 @@ void find_avl_mem(mem_map* mmap, mem_region r) {
 
         if ((end >= ubase) && (base < ubase))
             end = ubase - 1;
-    }
-    
+    }   
+
     printk("Available memory from %p to %p\n", (void*)base, (void*)end);
 
     new = &mmap->mem_avl[mmap->num_avl];
@@ -95,6 +92,7 @@ void parse_tag_elf_symbols(mem_map* mmap, void* elf_tag) {
     MB_tag_elf_symbols* elf_header;
     MB_elf_sect_header* sects;
     mem_region region;
+    uint64_t end;
 //    char *name, *str_table;
 
     if (elf_tag == NULL) {
@@ -110,6 +108,11 @@ void parse_tag_elf_symbols(mem_map* mmap, void* elf_tag) {
     for (i = 0; i < num_sects; i++) {
         region.base_addr = sects[i].seg_addr;
         region.length = sects[i].seg_size;
+        
+        // aligns with a page        
+//        end = region.length + region.base_addr - 1;
+//        end = ((end % PG_SIZE) == 0) ? end : (end + PG_SIZE - (end % PG_SIZE) - 1);
+//        region.length = end - region.base_addr;
 
         if (region.length != 0) {
             printk("Unavailable mem region between %p and %p\n", 
@@ -179,70 +182,11 @@ void init_mmap(mem_map* mmap) {
     mmap->pgs_alloc = 0;
 }
 
-int add_pf() {
-    mem_region r;
-    uint64_t end;
-
-    r = mmap.mem_avl[mmap.curr_region];
-    end = r.base_addr + r.length - 1;
-
-    mmap.pg_last += PG_SIZE;
-
-    // check if room for a page in current region
-    while ((mmap.pg_last >= (void*)end) 
-            || ((mmap.pg_last + PG_SIZE) > (void*) end)) {
-        mmap.curr_region++;
-
-        if (mmap.curr_region == mmap.num_avl)
-            return 0;
-
-        r = mmap.mem_avl[mmap.curr_region];
-        end = r.base_addr + r.length - 1;
-        mmap.pg_last = (void*)r.base_addr;
-    }
-
-    ((pf_header*)mmap.pg_last)->next = mmap.pgs_free;
-    mmap.pgs_free = mmap.pg_last;
-    mmap.pgs_avl++;
-
-    return 1;
-}
-
-void init_mem_pool() {
-    mmap.pg_last = (void*)mmap.mem_avl[0].base_addr;
-
-    while (mmap.pgs_avl != DFLT_NUM_PGS) {
-        if(!add_pf())
-            break;
-    }
-}
-
-void MMU_setup(PML4_ref pml, void* tag) {
+void mmap_setup(mem_map* mmap, void* tag) {
 //    printk("Tag address: %p\n", tag);
 //    printk("Header size: %d\n", ((MB_tag_header*)tag)->tag_size);
-    init_mmap(&mmap);
-    parse_mb_tags(&mmap, tag);
-    init_mem_pool();
+
+    init_mmap(mmap);
+    parse_mb_tags(mmap, tag);
 }
 
-void* MMU_pf_alloc() {
-    void* pf;
-
-    // return NULL if no pages left to allocate
-    if ((mmap.pgs_avl == 0) && (add_pf() == 0))
-        return NULL;
-
-    pf = mmap.pgs_free;
-    mmap.pgs_free = ((pf_header*)mmap.pgs_free)->next;
-    mmap.pgs_avl--;
-    mmap.pgs_alloc++;
-
-    return pf;
-}
-
-void MMU_pf_free(void* pf) {
-    ((pf_header*)pf)->next = mmap.pgs_free;
-    mmap.pgs_free = pf;
-    mmap.pgs_alloc--;
-    mmap.pgs_avl++;
-}

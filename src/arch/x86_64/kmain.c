@@ -4,6 +4,7 @@
 #include "idt.h"
 #include "irq.h"
 #include "mmap.h"
+#include "mmu.h"
 
 #include "pic_cd.h"
 #include "vga_cd.h"
@@ -45,16 +46,16 @@ void kmain(PML4_ref pml, void* mb_tag) {
     SER_init();
 
     // Memory Setup 
-    MMU_setup(pml, mb_tag);
-
-    // Splash End
-    delay_cycles(SPLASH_DELAY);
+    MMU_init(mb_tag);
 
     // Testing
     test_pf_alloc();
-    test_pf_alloc();
+//    test_pf_alloc();
 
     splash_end();
+
+    // Splash End
+    delay_cycles(SPLASH_DELAY);
 
 //    BREAK;
 
