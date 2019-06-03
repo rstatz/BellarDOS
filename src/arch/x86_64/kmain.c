@@ -50,7 +50,6 @@ void kmain(PML4_ref pml, void* mb_tag) {
 
     // Testing
     test_pf_alloc();
-//    test_pf_alloc();
 
     splash_end();
 

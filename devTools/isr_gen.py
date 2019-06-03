@@ -34,6 +34,7 @@ def gen_isr() :
          "      call interrupt_handler\n"
          "      pop rax\n"
          "      pop r9\n"
+         "      pop r8\n"
          "      pop rcx\n"
          "      pop rdx\n"
          "      pop rsi\n"
@@ -47,6 +48,7 @@ def gen_isr() :
          "      call interrupt_handler_err\n"
          "      pop rax\n"
          "      pop r9\n"
+         "      pop r8\n"
          "      pop rcx\n"
          "      pop rdx\n"
          "      pop rsi\n"
@@ -60,15 +62,30 @@ def gen_isr() :
         if (isr_err[i] == 1) :
             s = ("isr%d:\n" %i +
 #                 "      call bpoint\n"
-                 "      push rsi\n"
-                 "      mov rsi, [rsp + 8]\n"
+                 "      push r10\n"
+                 "      push r11\n"
                  "      push rdi\n"
+                 "      push rsi\n"
+                 "      mov rsi, [rsp + 32]\n"
+                 "      push rdx\n"
+                 "      push rcx\n"
+                 "      push r8\n"
+                 "      push r9\n"
+                 "      push rax\n"
                  "      mov rdi, 0x%x\n" % i +
                  "      jmp isr_err\n\n")
         else :
             s = ("isr%d:\n" % i +
 #                 "      call bpoint\n"
+                 "      push r10\n"
+                 "      push r11\n"
                  "      push rdi\n"
+                 "      push rsi\n"
+                 "      push rdx\n"
+                 "      push rcx\n"
+                 "      push r8\n"
+                 "      push r9\n"
+                 "      push rax\n"
                  "      mov rdi, 0x%x\n" % i +
                  "      jmp isr_normal\n\n")
         f.write(s)

@@ -92,7 +92,6 @@ void parse_tag_elf_symbols(mem_map* mmap, void* elf_tag) {
     MB_tag_elf_symbols* elf_header;
     MB_elf_sect_header* sects;
     mem_region region;
-    uint64_t end;
 //    char *name, *str_table;
 
     if (elf_tag == NULL) {
@@ -109,11 +108,6 @@ void parse_tag_elf_symbols(mem_map* mmap, void* elf_tag) {
         region.base_addr = sects[i].seg_addr;
         region.length = sects[i].seg_size;
         
-        // aligns with a page        
-//        end = region.length + region.base_addr - 1;
-//        end = ((end % PG_SIZE) == 0) ? end : (end + PG_SIZE - (end % PG_SIZE) - 1);
-//        region.length = end - region.base_addr;
-
         if (region.length != 0) {
             printk("Unavailable mem region between %p and %p\n", 
                 (void*)(sects[i].seg_addr), 

@@ -13,8 +13,10 @@ int add_pf() {
     mem_region r;
     uint64_t end;
 
+    // Computes end of available region
     r = mmap.mem_avl[mmap.curr_region];
     end = r.base_addr + r.length - 1;
+    end = ((end % PG_SIZE) == 0) ? end : (end + (end % PG_SIZE));
 
     mmap.pg_last += PG_SIZE;
 
@@ -28,6 +30,7 @@ int add_pf() {
 
         r = mmap.mem_avl[mmap.curr_region];
         end = r.base_addr + r.length - 1;
+        end = ((end % PG_SIZE) == 0) ? end : (end + (end % PG_SIZE));
         mmap.pg_last = (void*)(r.base_addr + PG_SIZE - (r.base_addr % PG_SIZE));
         // Make sure logic is correct
     }
