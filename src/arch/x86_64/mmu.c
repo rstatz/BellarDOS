@@ -18,6 +18,7 @@ int add_pf() {
     end = r.base_addr + r.length - 1;
     end = ((end % PG_SIZE) == 0) ? end : (end + (end % PG_SIZE));
 
+    // Automatically ignores page starting at zero
     mmap.pg_last += PG_SIZE;
 
     // check if room for a page in current region
@@ -54,9 +55,19 @@ void init_mem_pool() {
     }
 }
 
-void MMU_init(void* tag) {
+void init_idpaging(PML4_ref pml) {
+    PML4E* pml4_base;
+
+    pml4_base = (PML4E*)(uint64_t)pml.base_addr;
+
+    pml4_base[0].p = 1;
+    pml4_base[0].pat = 1; // Set huge bit, fill direct map the entire thing
+}
+
+void MMU_init(PML4_ref pml, void* tag) {
     mmap_setup(&mmap, tag);
     init_mem_pool();
+    init_idpaging(pml);
 }
 
 void* MMU_pf_alloc() {

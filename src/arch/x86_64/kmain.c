@@ -46,10 +46,10 @@ void kmain(PML4_ref pml, void* mb_tag) {
     SER_init();
 
     // Memory Setup 
-    MMU_init(mb_tag);
+    MMU_init(pml, mb_tag);
 
     // Testing
-    test_pf_alloc();
+//    test_pf_alloc();
 
     splash_end();
 
