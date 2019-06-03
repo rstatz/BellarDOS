@@ -2,11 +2,20 @@
 #include <stddef.h>
 #include "mmap.h"
 #include "mmu.h"
+#include "strings.h"
 #include "print.h"
 
 #define PG_SIZE 4096
 #define DFLT_NUM_PGS 100
 
+#define K_SPACE 0
+#define U_SPACE 1
+
+#define HUGE_BIT 1
+#define PRESENT_BIT 1
+#define DEMAND_BIT 1
+
+#define KERNEL_HEAP_INDEX 15
 #define KERNEL_HEAP 0xF000000000
 
 #define GB_BYTES 0x40000000
@@ -83,99 +92,127 @@ void MMU_pf_free(void* pf) {
     mmap.pgs_avl++;
 }
 
-void init_identity_paging(PML4E* ide) {
-    int i;
-    L3E* l3;
-
-    l3 = MMU_pf_alloc();
-
-    ide->p = 1;
-    ide->rw = 1;
-    ide->us = 0;
-    ide->pwt = 0;
-    ide->pcd = 0;
-    ide->a = 0;
-    ide->ign = 0;
-    ide->mbz = 0;
-    ide->avl_lo = 0;
-    ide->base_addr = (uint64_t)l3;
-    ide->avl_hi = 0;
-    ide->nx = 0;
-    
-    for (i = 0; i < 512; i++, l3++) {
-        l3->p = 1;
-        l3->rw = 1;
-        l3->us = 0;
-        l3->pwt = 0;
-        l3->pcd = 0;
-        l3->a = 0;
-        l3->ign = 0;
-        l3->s = 1; // Sets to 1Gb pages
-        l3->mbz = 0;
-        l3->avl_lo = 0;
-        l3->base_addr = i * GB_BYTES;
-        l3->avl_hi = 0;
-        l3->nx = 0;
-    }
-}
-
-void init_kstack_paging(PML4E* l4) {
+void init_l4e(PML4E* l4, void* l3, uint8_t us) {
     l4->p = 1;
     l4->rw = 1;
-    l4->us = 0;
+    l4->us = us;
     l4->pwt = 0;
     l4->pcd = 0;
     l4->a = 0;
     l4->ign = 0;
     l4->mbz = 0;
     l4->avl_lo = 0;
-//    l4->base_addr = ; Figure this out
+    l4->base_addr = (uint64_t)l3;
     l4->avl_hi = 0;
-    l4->nx = 0;
+    l4->nx = 0; 
+}
+
+void init_l3e(L3E* l3, void* l2, uint8_t s, uint8_t us) {
+    l3->p = 1;
+    l3->rw = 1;
+    l3->us = us;
+    l3->pwt = 0;
+    l3->pcd = 0;
+    l3->a = 0;
+    l3->ign = 0;
+    l3->s = s;
+    l3->mbz = 0;
+    l3->avl_lo = 0;
+    l3->base_addr = (uint64_t)l2;
+    l3->avl_hi = 0;
+    l3->nx = 0;
+}
+
+void init_l2e(L2E* l2, void* l1, uint8_t s, uint8_t us) {
+    l2->p = 1;
+    l2->rw = 1;
+    l2->us = us;
+    l2->pwt = 0;
+    l2->pcd = 0;
+    l2->a = 0;
+    l2->ign = 0;
+    l2->s = s;
+    l2->ign2 = 0;
+    l2->avl_lo = 0;
+    l2->base_addr = (uint64_t)l1;
+    l2->avl_hi = 0;
+    l2->nx = 0;
+}
+
+void init_identity_paging(PML4E* l4) {
+    uint64_t i;
+    void* l3;
+
+    l3 = MMU_pf_alloc();
+    
+    init_l4e(l4, l3, K_SPACE);
+   
+    for (i = 0; i < 512; i++, l3++) {
+        init_l3e(l3, (void*)(i * GB_BYTES), HUGE_BIT, K_SPACE);
+    }
+}
+
+void init_kstack_paging(PML4E* l4) {
+    init_l4e(l4, NULL/*TODO (L3)*/, K_SPACE);
 }
 
 void init_growth_paging(PML4E* l4) {
     int i;
 
     for (i = 0; i < 13; i++, l4++) {
-        l4->p = 1;
-        l4->rw = 1;
-        l4->us = 0;
-        l4->pwt = 0;
-        l4->pcd = 0;
-        l4->a = 0;
-        l4->ign = 0;
-        l4->mbz = 0;
-        l4->avl_lo = 0;
-//        l4->base_addr = ; Figure this out
-        l4->avl_hi = 0;
-        l4->nx = 0;
+        init_l4e(l4, NULL/*TODO (L3)*/, K_SPACE);
     }
 }
 
 void init_kheap_paging(PML4E* l4) {
+    L3E* l3 = MMU_pf_alloc();
 
+    memset((void*)l3, 0, PG_SIZE);
+    
+    init_l4e(l4, (void*)l3, K_SPACE);
 }
 
 void init_uspace_paging(PML4E* l4) {
-
+    init_l4e(l4, NULL/*TODO (L3)*/, U_SPACE);
 }
 
 void vmap_setup(PML4_ref pml) {
-    PML4e* pml4e = (PML4E*)(uint64_t)pml.base_addr;
+    PML4E* pml4e = (PML4E*)(uint64_t)pml.base_addr;
 
-    vmap.pml4e = pml4e;
-    vmap.vasp = vmap.v_free_stack;
+    vmap.pml4_base = pml4e;
+    vmap.lost_mem_stat = 0;
+    vmap.vasp = vmap.va_free_stack;
     vmap.va_last = KERNEL_HEAP;
 }
 
-void init_vaddr(PML4_ref pml) {
-    PML4E* pml4e = vmap.pml4e;
+L3E* get_l3e(vaddr* va, PML4E* l4e) {
+    if (l4e->p != PRESENT_BIT)
+        return NULL;
+    
+    return &((L3E*)(uint64_t)l4e->base_addr)[va->pdp_offset];
+}
+
+L2E* get_l2e(vaddr* va, L3E* l3e) {
+    if (l3e->p != PRESENT_BIT)
+        return NULL;
+    
+    return &((L2E*)(uint64_t)l3e->base_addr)[va->pd_offset];
+}
+
+L1E* get_l1e(vaddr* va, L2E* l2e) {
+    if (l2e->p != PRESENT_BIT)
+        return NULL;
+    
+    return &((L1E*)(uint64_t)l2e->base_addr)[va->pt_offset];
+}
+
+void init_vaddr_space() {
+    PML4E* pml4e = vmap.pml4_base;
 
     init_identity_paging(pml4e);
     init_kstack_paging(++pml4e); // Not complete
     init_growth_paging(++pml4e); // Not complete
-    pml4e += 13;
+    pml4e += 13; // CHECK
     init_kheap_paging(pml4e);
     init_uspace_paging(++pml4e);
 }
@@ -185,37 +222,98 @@ void MMU_init(PML4_ref pml, void* tag) {
     init_mem_pool();
     
     vmap_setup(pml);
-    init_vaddr();
+    init_vaddr_space();
 }
 
 void* MMU_alloc_page() {
-    void* va;
+    void *va, *l2_base_addr, *l1_base_addr;
+    PML4E* l4;
+    L3E* l3;
+    L2E* l2;
+    L1E* l1;
 
+    // Determines next va
     if(vmap.vasp == vmap.va_free_stack) {
-        va = va_last;
+        va = (void*)vmap.va_last;
         vmap.va_last += PG_SIZE;
     }
     else {
         vmap.vasp--;
-        va = *vmap.vast;
+        va = (void*)*vmap.vasp;
     }
 
-    // TODO: Navigate page tables and set demand bit
+    // Gets L4 Entry
+    l4 = &vmap.pml4_base[KERNEL_HEAP_INDEX];
+
+    // Checks for L3 table
+    if ((l3 = get_l3e(va, l4)) == NULL) {
+        printk("ERROR: KERNEL HEAP NOT INITIALIZED\n");
+        return NULL;
+    }
+  
+    // Checks for L2 table
+    if ((l2 = get_l2e(va, l3)) == NULL) {
+        l2_base_addr = MMU_pf_alloc();
+        memset((void*)l2_base_addr, 0, PG_SIZE);
+
+        init_l3e(l3, l2_base_addr, !HUGE_BIT, K_SPACE);
+        l2 = &(((L2E*)(l2_base_addr))[((vaddr*)va)->pd_offset]);
+    }
+
+    // Checks for L1 Table
+    if ((l1 = get_l1e(va, l2)) == NULL) {
+        l1_base_addr = MMU_pf_alloc();
+        memset((void*)l1_base_addr, 0, PG_SIZE);
+
+        init_l2e(l2, l1_base_addr, !HUGE_BIT, K_SPACE);
+        l1 = &(((L1E*)(l1_base_addr))[((vaddr*)va)->pt_offset]);
+    }
+
+    memset((void*)l1, 0, sizeof(L1E));
+
+    l1->rw = 1;
+    l1->avl_lo |= DEMAND_BIT;
 
     return va;
 }
 
 void MMU_free_page(void* p) {
-    vaddr* va = &p;
+    vaddr* va = (vaddr*)&p;
+    PML4E* l4;
+    L3E* l3;
+    L2E* l2;
+    L1E* l1;
 
-    // TODO: navigate page tables, clear demand/present bits if valid (error if not)
-    // free page frame if present?
+    // Navigates pages
+    l4 = &vmap.pml4_base[va->pml4_offset];
 
-    if (vmap.vasp != (vmap.va_free_stack + sizeof(vmap.va_free_stack))) {
-        *vmap.vasp = *va;
-        vmap.vasp++;
+    if ((l3 = get_l3e(va, l4)) == NULL)
+        printk("ERROR: Unable to free va %p at L3\n", p);
+
+    if ((l2 = get_l2e(va, l3)) == NULL)
+        printk("ERROR: Unable to free va %p at L2\n", p);
+
+    if ((l1 = get_l1e(va, l2)) == NULL)
+        printk("ERROR: Unable to free va %p at L1\n", p);
+
+    // Frees page frame if present
+    if (l1->p == 1) {
+        MMU_pf_free((void*)(uint64_t)l1->base_addr);
+        l1->p = 0;
+    }
+
+    l1->avl_lo &= ~DEMAND_BIT;
+
+    // Adds freed va space to free stack
+    if (vmap.vasp == (vmap.va_free_stack + sizeof(vmap.va_free_stack))) {
+        vmap.lost_mem_stat++;
         return;
     }
-    
-    vmap.lost_mem_stat++;
+
+    *vmap.vasp = *(uint64_t*)va;
+    vmap.vasp++;
+}
+
+void IRQ_pf_handler() {
+
 }
