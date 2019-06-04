@@ -7,15 +7,15 @@
 Virtual Memory Map:
 **************************************************************
 Base Address         | Usage
-    0x00000000000    |     Physical Page Frames (Identity Map)
+    0x000000000000   |     Physical Page Frames (Identity Map)
     (PML4E SLot 0)   |
-    0x01000000000    |     Kernel Stacks
+    0x010000000000   |     Kernel Stacks
     (PML4E Slot 1)   |     
-    0x02000000000    |     Reserved / Growth
+    0x020000000000   |     Reserved / Growth
     (PML4E Slot 2-14)|     
-    0x0F000000000    |     Kernel Heap
+    0x0F0000000000   |     Kernel Heap
     (PML4E Slot 15)  |
-    0x10000000000    |     User Space Starts
+    0x100000000000   |     User Space Starts
     (PML4E Slot 16)  |
 \************************************************************/
 
@@ -97,7 +97,7 @@ typedef struct vaddr {
     uint16_t pd_offset: 9;
     uint16_t pdp_offset: 9;
     uint16_t pml4_offset: 9;
-    uint16_t se: 12;
+    uint16_t se: 16;
 } __attribute__((packed)) vaddr;
 
 typedef struct virt_map {
@@ -106,6 +106,14 @@ typedef struct virt_map {
     uint64_t *vasp, va_last;
     uint64_t va_free_stack[VA_FREE_STACK_SIZE];
 } virt_map;
+
+static inline vaddr get_pf_va() {
+    uint64_t val;
+
+    asm volatile("mov %%cr2, %0" : "=a"(val) : );
+    
+    return *(vaddr*)&val;
+}
 
 void MMU_init(PML4_ref, void* tag);
 
@@ -117,6 +125,6 @@ void* MMU_alloc_page();
 
 void MMU_free_page(void*);
 
-void IRQ_pf_handler();
+void IRQ_pf_handler(int err);
 
 #endif

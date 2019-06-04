@@ -3,4 +3,6 @@
 
 void test_pf_alloc(); 
 
+void test_alloc_page();
+
 #endif

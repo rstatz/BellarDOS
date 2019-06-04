@@ -50,11 +50,11 @@ void kmain(PML4_ref pml, void* mb_tag) {
 
     // Testing
 //    test_pf_alloc();
-
-    splash_end();
+    test_alloc_page();
 
     // Splash End
     delay_cycles(SPLASH_DELAY);
+    splash_end();
 
 //    BREAK;
 

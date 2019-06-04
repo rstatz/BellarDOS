@@ -4,6 +4,7 @@
 
 #include "mmap.h"
 #include "mmu.h"
+#include "strings.h"
 #include "debug.h"
 #include "print.h"
 
@@ -47,4 +48,27 @@ void test_pf_alloc() {
 //    BREAK;
     while ((pgs[0] = MMU_pf_alloc()) != NULL)
         printk("%p\n", pgs[0]);
+}
+void test_alloc_page() {
+    int i;
+    void* vaddr[10];
+
+//    BREAK;    
+
+    for (i = 0; i < 10; i++) {
+        vaddr[i] = MMU_alloc_page();
+//        printk("Alloc'd va %p\n", vaddr[i]);
+    }
+
+    MMU_free_page(vaddr[0]);
+//    printk("Freed va %p\n", vaddr[0]);
+    vaddr[0] = MMU_alloc_page();
+//    printk("Realloc'd va %p\n", vaddr[0]);
+
+    memset(vaddr[1], 0, 8);
+
+    for (i = 0; i < 10; i++) {
+        MMU_free_page(vaddr[i]);
+//        printk("Freed va %p\n", vaddr[i]);
+    }
 }

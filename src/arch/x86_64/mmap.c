@@ -51,7 +51,7 @@ void find_avl_mem(mem_map* mmap, mem_region r) {
             end = ubase - 1;
     }   
 
-    printk("Available memory from %p to %p\n", (void*)base, (void*)end);
+//    printk("Available memory from %p to %p\n", (void*)base, (void*)end);
 
     new = &mmap->mem_avl[mmap->num_avl];
     new->base_addr = base;
@@ -92,7 +92,6 @@ void parse_tag_elf_symbols(mem_map* mmap, void* elf_tag) {
     MB_tag_elf_symbols* elf_header;
     MB_elf_sect_header* sects;
     mem_region region;
-//    char *name, *str_table;
 
     if (elf_tag == NULL) {
         printk("Multiboot elf symbols tag not found\n");
@@ -102,16 +101,15 @@ void parse_tag_elf_symbols(mem_map* mmap, void* elf_tag) {
     elf_header = (MB_tag_elf_symbols*)elf_tag;
     sects = (MB_elf_sect_header*)(&(elf_header->sect_head_array));
     num_sects = elf_header->num_sect_head_entries;
-//    str_table = (char*)elf_header->index_str_table_sect;
 
     for (i = 0; i < num_sects; i++) {
         region.base_addr = sects[i].seg_addr;
         region.length = sects[i].seg_size;
         
         if (region.length != 0) {
-            printk("Unavailable mem region between %p and %p\n", 
-                (void*)(sects[i].seg_addr), 
-                (void*)(sects[i].seg_addr + sects[i].seg_size - 1));
+//            printk("Unavailable mem region between %p and %p\n", 
+//                (void*)(sects[i].seg_addr), 
+//                (void*)(sects[i].seg_addr + sects[i].seg_size - 1));
 
             mmap->mem_unavl[mmap->num_unavl] = region;
             mmap->num_unavl++;

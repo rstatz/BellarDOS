@@ -15,7 +15,7 @@
 #define INT_MXDGTS_HX 8
 #define LONG_MXDGTS_HX 8
 #define QUAD_MXDGTS_HX 16
-#define PTR_MXDGTS_HX 8
+#define PTR_MXDGTS_HX 16
 
 #define LOWER_NIB 0x0F
 
