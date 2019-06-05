@@ -65,6 +65,7 @@ void test_alloc_page() {
     vaddr[0] = MMU_alloc_page();
 //    printk("Realloc'd va %p\n", vaddr[0]);
 
+//    BREAK;
     memset(vaddr[1], 0, 8);
 
     for (i = 0; i < 10; i++) {

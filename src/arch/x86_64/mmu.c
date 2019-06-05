@@ -301,7 +301,8 @@ void MMU_free_page(void* p) {
     // Navigates pages
     l4 = &vmap.pml4_base[va->pml4_offset];
 
-    if (((l3 = get_l3e(va, l4)) == NULL)
+    if ((!l4->p)
+      || ((l3 = get_l3e(va, l4)) == NULL)
       || ((l2 = get_l2e(va, l3)) == NULL)
       || ((l1 = get_l1e(va, l2)) == NULL)) {
         printk("ERROR: Unable to free va %p\n", p);
@@ -328,34 +329,52 @@ void MMU_free_page(void* p) {
     vmap.vasp++;
 }
 
+void pf_error(int err, void* va) {
+    void* pt = get_pt_addr();
+    
+    printk("#PF ERROR %x: \n\tINVALID ADDRESS %p\n\tPAGE TABLE %p\n", 
+            err, va, pt);
+   HLT;
+}
+
 void IRQ_pf_handler(int err) {
     union va {
         vaddr va;
         void* va_p;
     } va;
 
-    BREAK;
+//    BREAK;
+
+    void* pt;;
 
     PML4E* l4;
     L3E* l3;
     L2E* l2;
-    L1E* l1;
+    L1E* l1; 
 
     va.va = get_pf_va();
     l4 = &vmap.pml4_base[va.va.pml4_offset];
+   
+    pt = get_pt_addr();
+    printk("#PF INFO %x:\n\t VA %p\n\tPAGE TABLE %p\n", 
+        err, va.va_p, pt);
     
-    if (((l3 = get_l3e(&va.va, l4)) == NULL)
+//    BREAK;
+
+    if ((!l4->p)
+      || ((l3 = get_l3e(&va.va, l4)) == NULL)
       || ((l2 = get_l2e(&va.va, l3)) == NULL)
-      || ((l1 = get_l1e(&va.va, l2)) == NULL)) {
-        printk("ERROR: INVALID ADDRESS %p\n", va.va_p);
-        return;
-    }
-    
-    if (!(l1->p & PRESENT_BIT) && (l1->avl_lo & DEMAND_BIT)) {
+      || ((l1 = get_l1e(&va.va, l2)) == NULL))
+        pf_error(err, va.va_p);   
+ 
+    if (l1->avl_lo & DEMAND_BIT) {
         l1->base_addr = (uint64_t)MMU_pf_alloc();
+        l1->avl_lo &= ~DEMAND_BIT;
         l1->p = 1;
         l1->rw = 1;
     }
     else
-        printk("ERROR: INVALID ADDRESS%p\n", va.va_p);
+        pf_error(err, va.va_p);
+
+    BREAK;
 }

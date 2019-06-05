@@ -115,6 +115,14 @@ static inline vaddr get_pf_va() {
     return *(vaddr*)&val;
 }
 
+static inline void* get_pt_addr() {
+    void* addr;
+
+    asm volatile("mov %%cr3, %0" : "=a"(addr) : );
+    
+    return addr;
+}
+
 void MMU_init(PML4_ref, void* tag);
 
 void* MMU_pf_alloc();

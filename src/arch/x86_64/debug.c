@@ -5,3 +5,7 @@ void bpoint() {
 
     while(i);
 }
+
+void halt_cpu() {
+    asm volatile ("hlt");
+}
