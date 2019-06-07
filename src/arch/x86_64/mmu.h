@@ -43,6 +43,24 @@ typedef struct PML4E {
     uint16_t nx: 1;
 } __attribute__((packed)) PML4E;
 
+typedef struct L3E_G {
+    uint8_t p: 1;
+    uint8_t rw: 1;
+    uint8_t us: 1;
+    uint8_t pwt: 1;
+    uint8_t pcd: 1;
+    uint8_t a: 1;
+    uint8_t d: 1;
+    uint8_t s: 1;
+    uint8_t g: 1;
+    uint8_t avl: 3;
+    uint8_t pat: 1;
+    uint32_t res: 17;
+    uint32_t base_addr: 22;
+    uint16_t avl_hi: 11;
+    uint8_t nx: 1;
+} __attribute__((packed)) L3E_G;
+
 typedef struct L3E {
     uint8_t p: 1;
     uint8_t rw: 1;
@@ -115,15 +133,19 @@ static inline vaddr get_pf_va() {
     return *(vaddr*)&val;
 }
 
-static inline void* get_pt_addr() {
-    void* addr;
+static inline PML4_ref get_pt_addr() {
+    PML4_ref addr;
 
     asm volatile("mov %%cr3, %0" : "=a"(addr) : );
     
     return addr;
 }
 
-void MMU_init(PML4_ref, void* tag);
+static inline void set_pt(PML4_ref pml) {
+    asm volatile("mov %0, %%cr3" : : "Nd"(pml));
+}
+
+void MMU_init(void* tag);
 
 void* MMU_pf_alloc();
 
@@ -133,6 +155,6 @@ void* MMU_alloc_page();
 
 void MMU_free_page(void*);
 
-void IRQ_pf_handler(int err);
+void IRQ_pf_handler(int);
 
 #endif

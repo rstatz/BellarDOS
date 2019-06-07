@@ -20,7 +20,9 @@
 #define KERNEL_HEAP_INDEX 15
 #define KERNEL_HEAP 0x78000000000
 
-#define GB_BYTES 0x40000000
+#define CVRT_VA(X) ((uint64_t)(X) >> 12)
+#define CVRT_ENTRY(X) ((uint64_t)(X) << 12)
+#define GB_BYTES (1 << 30)
 
 mem_map mmap;
 virt_map vmap;
@@ -80,6 +82,9 @@ void* MMU_pf_alloc() {
     }
 
     pf = mmap.pgs_free;
+
+    printk("Allocating pf at %p\n", pf);
+
     mmap.pgs_free = ((pf_header*)mmap.pgs_free)->next;
     mmap.pgs_avl--;
     mmap.pgs_alloc++;
@@ -95,77 +100,76 @@ void MMU_pf_free(void* pf) {
 }
 
 void init_l4e(PML4E* l4, void* l3, uint8_t us) {
+    memset((void*)l4, 0 , sizeof(PML4E));
+
     l4->p = 1;
     l4->rw = 1;
     l4->us = us;
-    l4->pwt = 0;
-    l4->pcd = 0;
-    l4->a = 0;
-    l4->ign = 0;
-    l4->mbz = 0;
-    l4->avl_lo = 0;
-    l4->base_addr = (uint64_t)l3;
-    l4->avl_hi = 0;
-    l4->nx = 0; 
+    l4->base_addr = CVRT_VA(l3);
 }
 
 void init_l3e(L3E* l3, void* l2, uint8_t s, uint8_t us) {
+    memset((void*)l3, 0, sizeof(L3E));
+
     l3->p = 1;
     l3->rw = 1;
     l3->us = us;
-    l3->pwt = 0;
-    l3->pcd = 0;
-    l3->a = 0;
-    l3->ign = 0;
     l3->s = s;
-    l3->mbz = 0;
-    l3->avl_lo = 0;
-    l3->base_addr = (uint64_t)l2;
-    l3->avl_hi = 0;
-    l3->nx = 0;
+    l3->base_addr = CVRT_VA(l2);
+}
+
+void init_l3e_g(L3E_G* l3, void* l2, uint8_t s, uint8_t us) {
+    memset((void*)l3, 0, sizeof(L3E_G));
+
+    l3->p = 1;
+    l3->rw = 1;
+    l3->us = us;
+    l3->s = s;
+    l3->base_addr = CVRT_VA(l2);
 }
 
 void init_l2e(L2E* l2, void* l1, uint8_t s, uint8_t us) {
+    memset((void*)l2, 0, sizeof(L2E));
+
     l2->p = 1;
     l2->rw = 1;
     l2->us = us;
-    l2->pwt = 0;
-    l2->pcd = 0;
-    l2->a = 0;
-    l2->ign = 0;
     l2->s = s;
-    l2->ign2 = 0;
-    l2->avl_lo = 0;
-    l2->base_addr = (uint64_t)l1;
-    l2->avl_hi = 0;
-    l2->nx = 0;
+    l2->base_addr = CVRT_VA(l1);
 }
 
 void init_identity_paging(PML4E* l4) {
     uint64_t i;
-    void* l3;
+    L3E_G* l3;
 
-    l3 = MMU_pf_alloc();
+    l3 = (L3E_G*)MMU_pf_alloc();
     
-    init_l4e(l4, l3, K_SPACE);
+    init_l4e(l4, (void*)l3, K_SPACE);
    
     for (i = 0; i < 512; i++, l3++) {
-        init_l3e(l3, (void*)(i * GB_BYTES), HUGE_BIT, K_SPACE);
+        init_l3e_g((void*)l3, (void*)(i), HUGE_BIT, K_SPACE);
     }
 }
 
 void init_kstack_paging(PML4E* l4) {
-//    init_l4e(l4, NULL/*TODO (L3)*/, K_SPACE);
+    L3E* l3 = MMU_pf_alloc();
+    
+    memset((void*)l3, 0, PG_SIZE);
+
+    init_l4e(l4, l3, K_SPACE);
     return;
 }
 
 void init_growth_paging(PML4E* l4) {
     int i;
-    void* va;
+    L3E* l3;
 
     for (i = 0; i < 13; i++, l4++) {
-        va = MMU_pf_alloc();
-        init_l4e(l4, va, K_SPACE);
+        l3 = MMU_pf_alloc();
+
+        memset((void*)l3, 0, PG_SIZE);
+
+        init_l4e(l4, l3, K_SPACE);
     }
 }
 
@@ -178,14 +182,18 @@ void init_kheap_paging(PML4E* l4) {
 }
 
 void init_uspace_paging(PML4E* l4) {
-//    init_l4e(l4, NULL/*TODO (L3)*/, U_SPACE);
+    L3E* l3 = MMU_pf_alloc();
+
+    memset((void*)l3, 0, PG_SIZE);
+
+    init_l4e(l4, l3, U_SPACE);
     return;
 }
 
-void vmap_setup(PML4_ref pml) {
-    PML4E* pml4e = (PML4E*)(uint64_t)pml.base_addr;
+void vmap_setup() {
+    void* pml4_base = MMU_pf_alloc();
 
-    vmap.pml4_base = pml4e;
+    vmap.pml4_base = pml4_base;
     vmap.lost_mem_stat = 0;
     vmap.vasp = vmap.va_free_stack;
     vmap.va_last = KERNEL_HEAP;
@@ -195,25 +203,29 @@ L3E* get_l3e(vaddr* va, PML4E* l4e) {
     if (l4e->p != PRESENT_BIT)
         return NULL; 
 
-    return &(((L3E*)(uint64_t)l4e->base_addr)[va->pdp_offset]);
+    return &(((L3E*)CVRT_ENTRY(l4e->base_addr))[va->pdp_offset]);
 }
-
+// CONVERT ALL GETS
 L2E* get_l2e(vaddr* va, L3E* l3e) {
     if (l3e->p != PRESENT_BIT)
         return NULL;
     
-    return &(((L2E*)(uint64_t)l3e->base_addr)[va->pd_offset]);
+    return &(((L2E*)CVRT_ENTRY(l3e->base_addr))[va->pd_offset]);
 }
 
 L1E* get_l1e(vaddr* va, L2E* l2e) {
     if (l2e->p != PRESENT_BIT)
         return NULL;
     
-    return &(((L1E*)(uint64_t)l2e->base_addr)[va->pt_offset]);
+    return &(((L1E*)CVRT_ENTRY(l2e->base_addr))[va->pt_offset]);
 }
 
 void init_vaddr_space() {
+    PML4_ref cr3;
     PML4E* pml4e = vmap.pml4_base;
+
+    memset((void*)&cr3, 0, sizeof(PML4_ref));
+    cr3.base_addr = CVRT_VA(vmap.pml4_base);
 
     init_identity_paging(pml4e);
     init_kstack_paging(++pml4e); // Not complete
@@ -221,13 +233,15 @@ void init_vaddr_space() {
     pml4e += NUM_L4_GROWTH_PAGES;
     init_kheap_paging(pml4e);
     init_uspace_paging(++pml4e);
+    
+    set_pt(cr3);
 }
 
-void MMU_init(PML4_ref pml, void* tag) {
+void MMU_init(void* tag) {
     mmap_setup(&mmap, tag);
     init_mem_pool();
     
-    vmap_setup(pml);
+    vmap_setup();
     init_vaddr_space();
 }
 
@@ -296,7 +310,6 @@ void MMU_free_page(void* p) {
     L3E* l3;
     L2E* l2;
     L1E* l1;
-//    BREAK;
 
     // Navigates pages
     l4 = &vmap.pml4_base[va->pml4_offset];
@@ -311,7 +324,7 @@ void MMU_free_page(void* p) {
 
     // Frees page frame if present
     if (l1->p == 1) {
-        MMU_pf_free((void*)(uint64_t)l1->base_addr);
+        MMU_pf_free((void*)CVRT_ENTRY(l1->base_addr));
         l1->p = 0;
     }
 
@@ -330,37 +343,36 @@ void MMU_free_page(void* p) {
 }
 
 void pf_error(int err, void* va) {
-    void* pt = get_pt_addr();
+    PML4_ref pt = get_pt_addr();
     
     printk("#PF ERROR %x: \n\tINVALID ADDRESS %p\n\tPAGE TABLE %p\n", 
-            err, va, pt);
-   HLT;
+            err, va, (void*)CVRT_ENTRY(pt.base_addr));
+    HLT;
 }
 
+// TODO: COW
 void IRQ_pf_handler(int err) {
     union va {
         vaddr va;
         void* va_p;
     } va;
 
-//    BREAK;
-
-    void* pt;;
-
+    PML4_ref cr3;
     PML4E* l4;
     L3E* l3;
     L2E* l2;
     L1E* l1; 
 
+    cr3 = get_pt_addr();
     va.va = get_pf_va();
+
+    vmap.pml4_base = (void*)CVRT_ENTRY(cr3.base_addr);
     l4 = &vmap.pml4_base[va.va.pml4_offset];
    
-    pt = get_pt_addr();
     printk("#PF INFO %x:\n\t VA %p\n\tPAGE TABLE %p\n", 
-        err, va.va_p, pt);
-    
-//    BREAK;
+        err, va.va_p, vmap.pml4_base);
 
+    // Check if invalid address
     if ((!l4->p)
       || ((l3 = get_l3e(&va.va, l4)) == NULL)
       || ((l2 = get_l2e(&va.va, l3)) == NULL)
@@ -368,13 +380,11 @@ void IRQ_pf_handler(int err) {
         pf_error(err, va.va_p);   
  
     if (l1->avl_lo & DEMAND_BIT) {
-        l1->base_addr = (uint64_t)MMU_pf_alloc();
+        l1->base_addr = CVRT_VA(MMU_pf_alloc());
         l1->avl_lo &= ~DEMAND_BIT;
         l1->p = 1;
         l1->rw = 1;
     }
     else
         pf_error(err, va.va_p);
-
-    BREAK;
 }

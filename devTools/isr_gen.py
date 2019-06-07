@@ -55,6 +55,7 @@ def gen_isr() :
          "      pop rdi\n"
          "      pop r11\n"
          "      pop r10\n"
+         "      pop r15\n"
          "      iretq\n\n")
     f.write(s)
 

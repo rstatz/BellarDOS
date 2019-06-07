@@ -285,6 +285,7 @@ isr_err:
       pop rdi
       pop r11
       pop r10
+      pop r15
       iretq
 
 isr0:
