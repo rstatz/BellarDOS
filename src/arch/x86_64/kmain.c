@@ -53,6 +53,7 @@ void kmain(void* mb_tag) {
     // Testing
 //    test_pf_alloc();
 //    test_alloc_page();
+    test_kmalloc();
 
     // Splash End
     delay_cycles(SPLASH_DELAY);

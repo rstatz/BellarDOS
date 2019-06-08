@@ -4,6 +4,7 @@
 
 #include "mmap.h"
 #include "mmu.h"
+#include "kmalloc.h"
 #include "strings.h"
 #include "debug.h"
 #include "print.h"
@@ -49,6 +50,7 @@ void test_pf_alloc() {
     while ((pgs[0] = MMU_pf_alloc()) != NULL)
         printk("%p\n", pgs[0]);
 }
+
 void test_alloc_page() {
     int i;
     void* vaddr[10];
@@ -72,4 +74,29 @@ void test_alloc_page() {
         MMU_free_page(vaddr[i]);
 //        printk("Freed va %p\n", vaddr[i]);
     }
+}
+
+void test_kmalloc() {
+    int *i;
+    MadGarbo *garbo;
+
+    printk("Attempting kmalloc...\n");
+
+    i = (int*)kmalloc(sizeof(int));
+
+    printk("Kmalloc'd int* at %p\n", (void*)i);
+
+    garbo = (MadGarbo*)kmalloc(sizeof(MadGarbo));
+
+    printk("Kmalloc'd garbo* at %p\n", (void*)garbo);
+
+    garbo->i[1999] = 50;
+
+    printk("Freeing i...\n");
+
+    kfree((void*) i);
+
+    printk("Freeing garbo...\n");
+    
+    kfree((void*)garbo);
 }
