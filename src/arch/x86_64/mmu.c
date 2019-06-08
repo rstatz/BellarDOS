@@ -6,7 +6,6 @@
 #include "print.h"
 #include "debug.h"
 
-#define PG_SIZE 4096
 #define DFLT_NUM_PGS 100
 
 #define K_SPACE 0
@@ -18,7 +17,6 @@
 
 #define NUM_L4_GROWTH_PAGES 13
 #define KERNEL_HEAP_INDEX 15
-#define KERNEL_HEAP 0x78000000000
 
 #define CVRT_VA(X) ((uint64_t)(X) >> 12)
 #define CVRT_ENTRY(X) ((uint64_t)(X) << 12)

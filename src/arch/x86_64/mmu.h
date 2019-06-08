@@ -1,6 +1,10 @@
 #ifndef MMU_H
 #define MMU_H
 
+#define PG_SIZE 4096
+
+#define KERNEL_HEAP 0x78000000000
+
 #define VA_FREE_STACK_SIZE 100
 
 /************************************************************\

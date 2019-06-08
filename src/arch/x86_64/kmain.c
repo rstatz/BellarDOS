@@ -5,6 +5,7 @@
 #include "irq.h"
 #include "mmap.h"
 #include "mmu.h"
+#include "kmalloc.h"
 
 #include "pic_cd.h"
 #include "vga_cd.h"
@@ -47,10 +48,11 @@ void kmain(void* mb_tag) {
 
     // Memory Setup 
     MMU_init(mb_tag);
+    kmalloc_init();
 
     // Testing
 //    test_pf_alloc();
-    test_alloc_page();
+//    test_alloc_page();
 
     // Splash End
     delay_cycles(SPLASH_DELAY);

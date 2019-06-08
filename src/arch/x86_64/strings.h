@@ -1,7 +1,7 @@
+#include <stddef.h>
+
 #ifndef STRINGS_H
 #define STRINGS_H
-
-#define size_t unsigned long
 
 void* memset(void* dest, int c, size_t n);
 void* memcpy(void* dest, const void* src, size_t n);
