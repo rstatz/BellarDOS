@@ -13,7 +13,7 @@ grub_cfg=$(path)/grub.cfg
 C_FLAGS=-ffreestanding -mno-red-zone -Wall -Wextra -g -c
 
 C_FILES=$(wildcard $(path)/*.c)
-C_OBJ=kmain.o irq.o vga_cd.o ps2_cd.o serial_cd.o strings.o math.o print.o splash.o pic_cd.o gdt.o ist.o idt.o mmap.o mmu.o kmalloc.o test.o debug.o
+C_OBJ=kmain.o irq.o vga_cd.o ps2_cd.o serial_cd.o strings.o math.o print.o splash.o pic_cd.o gdt.o ist.o idt.o mmap.o mmu.o kmalloc.o multitask.o test.o debug.o
 ASM_OBJ=multiboot_header.o boot.o long_mode_init.o isr.o
 
 LIBS= -nostdlib -lgcc
@@ -51,6 +51,7 @@ $(kernel): $(ASM_OBJ) $(linker_script) $(C_FILES)
 	$(CC) -o ist.o $(C_FLAGS) $(path)/ist.c $(LIBS)
 	$(CC) -o mmap.o $(C_FLAGS) $(path)/mmap.c $(LIBS)
 	$(CC) -o mmu.o $(C_FLAGS) $(path)/mmu.c $(LIBS)
+	$(CC) -o multitask.o $(C_FLAGS) $(path)/multitask.c $(LIBS)
 	$(CC) -o kmalloc.o $(C_FLAGS) $(path)/kmalloc.c $(LIBS)
 	$(CC) -o splash.o $(C_FLAGS) $(path)/splash.c $(LIBS)
 	$(CC) -o math.o $(C_FLAGS) $(path)/math.c $(LIBS)

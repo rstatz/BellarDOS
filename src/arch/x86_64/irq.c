@@ -2,17 +2,19 @@
 #include "print.h"
 #include "debug.h"
 #include "mmu.h"
+#include "multitask.h"
 #include "pic_cd.h"
 #include "ps2_cd.h"
 #include "serial_cd.h"
-
-#define IRQ_KEYBOARD 33
-#define IRQ_SERIAL 36
 
 #define IRQ_DF 8
 #define IRQ_SSF 12
 #define IRQ_GPF 13
 #define IRQ_PF 14
+
+#define IRQ_KEYBOARD 33
+#define IRQ_SERIAL 36
+#define IRQ_CTXT_SWP 116
 
 extern void isr_unsupported();
 
@@ -26,6 +28,9 @@ void interrupt_handler(int irq) {
             break;
         case(IRQ_SERIAL) :
             IRQ_SER_tx();
+            break;
+        case(IRQ_CTXT_SWP) :
+            PROC_yield();
             break;
         default :
             printk("UNSUPPORTED INTERRUPT: IRQ %d\n", irq);
