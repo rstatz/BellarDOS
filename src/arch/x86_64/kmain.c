@@ -7,6 +7,8 @@
 #include "mmu.h"
 #include "kmalloc.h"
 
+#include "multitask.h"
+
 #include "pic_cd.h"
 #include "vga_cd.h"
 #include "ps2_cd.h"
@@ -50,10 +52,14 @@ void kmain(void* mb_tag) {
     MMU_init(mb_tag);
     kmalloc_init();
 
+    // Multitasking Setup
+    PROC_init();
+
     // Testing
 //    test_pf_alloc();
 //    test_alloc_page();
-    test_kmalloc();
+//    test_kmalloc();
+    test_multitask();
 
     // Splash End
     delay_cycles(SPLASH_DELAY);
@@ -67,6 +73,8 @@ void kmain(void* mb_tag) {
 //    gen_gpf();
 
     while(1) {
+        PROC_run();
         asm("hlt");
     }
+
 }

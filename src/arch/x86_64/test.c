@@ -5,6 +5,7 @@
 #include "mmap.h"
 #include "mmu.h"
 #include "kmalloc.h"
+#include "multitask.h"
 #include "strings.h"
 #include "debug.h"
 #include "print.h"
@@ -59,21 +60,23 @@ void test_alloc_page() {
 
     for (i = 0; i < 10; i++) {
         vaddr[i] = MMU_alloc_page();
-//        printk("Alloc'd va %p\n", vaddr[i]);
     }
 
     MMU_free_page(vaddr[0]);
-//    printk("Freed va %p\n", vaddr[0]);
     vaddr[0] = MMU_alloc_page();
-//    printk("Realloc'd va %p\n", vaddr[0]);
 
 //    BREAK;
     memset(vaddr[1], 0, 8);
 
     for (i = 0; i < 10; i++) {
         MMU_free_page(vaddr[i]);
-//        printk("Freed va %p\n", vaddr[i]);
     }
+
+    vaddr[0] = MMU_alloc_kstack();
+    
+//    BREAK;
+    
+    MMU_free_kstack(vaddr[0]);
 }
 
 void test_kmalloc() {
@@ -99,4 +102,23 @@ void test_kmalloc() {
     printk("Freeing garbo...\n");
     
     kfree((void*)garbo);
+}
+
+void printproc() {
+    int i;
+
+    for(i = 0; i < 100; i++) {
+        printk("I'M ALIVE");
+        yield();
+    }
+
+    printk("\nKilling Process...\n");
+
+    exit();
+}
+
+void test_multitask() {
+    kproc_t f = printproc;
+
+    PROC_create_kthread(f, 0);
 }

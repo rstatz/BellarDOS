@@ -26,7 +26,8 @@ def gen_isr() :
 
     for i in range(0, 256) :
         s = ("global isr%d\n" % i)
-        f.write(s)
+        if (i is not 116 and i is not 115) :
+            f.write(s)
 
     s =  ("\n"
          "isr_normal:\n"

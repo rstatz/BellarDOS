@@ -4,6 +4,7 @@
 #define PG_SIZE 4096
 
 #define KERNEL_HEAP 0x78000000000
+#define KERNEL_STACK 0x8000000000
 
 #define VA_FREE_STACK_SIZE 100
 
@@ -125,8 +126,10 @@ typedef struct vaddr {
 typedef struct virt_map {
     PML4E* pml4_base;
     uint64_t lost_mem_stat;
-    uint64_t *vasp, va_last;
-    uint64_t va_free_stack[VA_FREE_STACK_SIZE];
+    uint64_t *vakhsp, va_kheap_last;
+    uint64_t *vakssp, va_kstack_last;
+    uint64_t va_kheap_free_stack[VA_FREE_STACK_SIZE];
+    uint64_t va_kstack_free_stack[VA_FREE_STACK_SIZE];
 } virt_map;
 
 static inline vaddr get_pf_va() {
@@ -152,12 +155,13 @@ static inline void set_pt(PML4_ref pml) {
 void MMU_init(void* tag);
 
 void* MMU_pf_alloc();
-
 void MMU_pf_free(void*);
 
 void* MMU_alloc_page();
+void* MMU_alloc_kstack();
 
 void MMU_free_page(void*);
+void MMU_free_kstack(void*);
 
 void IRQ_pf_handler(int);
 

@@ -14,7 +14,7 @@ C_FLAGS=-ffreestanding -mno-red-zone -Wall -Wextra -g -c
 
 C_FILES=$(wildcard $(path)/*.c)
 C_OBJ=kmain.o irq.o vga_cd.o ps2_cd.o serial_cd.o strings.o math.o print.o splash.o pic_cd.o gdt.o ist.o idt.o mmap.o mmu.o kmalloc.o multitask.o test.o debug.o
-ASM_OBJ=multiboot_header.o boot.o long_mode_init.o isr.o
+ASM_OBJ=multiboot_header.o boot.o long_mode_init.o isr.o sys_call.o
 
 LIBS= -nostdlib -lgcc
 

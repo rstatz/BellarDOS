@@ -13,4 +13,6 @@ void test_alloc_page();
 
 void test_kmalloc();
 
+void test_multitask();
+
 #endif

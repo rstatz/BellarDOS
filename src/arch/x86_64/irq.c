@@ -1,3 +1,4 @@
+#include <stdint.h>
 #include "irq.h"
 #include "print.h"
 #include "debug.h"
@@ -12,13 +13,17 @@
 #define IRQ_GPF 13
 #define IRQ_PF 14
 
+// Devices
 #define IRQ_KEYBOARD 33
 #define IRQ_SERIAL 36
-#define IRQ_CTXT_SWP 116
+
+// System Calls
+#define SYS_EXIT 115
+#define SYS_YIELD 116
 
 extern void isr_unsupported();
 
-void interrupt_handler(int irq) {
+void interrupt_handler(int irq, uint64_t rsp) {
 //    BREAK;
     PIC_sendEOI(irq - 32);
 
@@ -29,8 +34,11 @@ void interrupt_handler(int irq) {
         case(IRQ_SERIAL) :
             IRQ_SER_tx();
             break;
-        case(IRQ_CTXT_SWP) :
-            PROC_yield();
+        case(SYS_EXIT) :
+            PROC_exit(rsp);
+            break;
+        case(SYS_YIELD) :
+            PROC_yield(rsp);
             break;
         default :
             printk("UNSUPPORTED INTERRUPT: IRQ %d\n", irq);

@@ -56,6 +56,8 @@ extern void isr32();
 extern void isr33();
 
 extern void isr36();
+extern void isr115();
+extern void isr116();
 
 extern void isr_unsupported();
 
@@ -130,9 +132,14 @@ void idt_init() {
         idt.isr[i] = newIDTEntry(NULL, IST_NORMAL);
     }
 
+    // Devices
     idt.isr[0] = newIDTEntry(&isr32, IST_NORMAL); // Timer
     idt.isr[1] = newIDTEntry(&isr33, IST_NORMAL); // Keyboard Interrupt
     idt.isr[4] = newIDTEntry(&isr36, IST_NORMAL); // Serial Output
+
+    // System Calls
+    idt.isr[83] = newIDTEntry(&isr115, IST_NORMAL); // Exit
+    idt.isr[84] = newIDTEntry(&isr116, IST_NORMAL); // Yield
 }
 
 void idt_load() {

@@ -16,7 +16,10 @@
 #define DEMAND_BIT 1
 
 #define NUM_L4_GROWTH_PAGES 13
+#define KERNEL_STACK_INDEX 1
 #define KERNEL_HEAP_INDEX 15
+
+#define PGS_PER_STACK 64
 
 #define CVRT_VA(X) ((uint64_t)(X) >> 12)
 #define CVRT_ENTRY(X) ((uint64_t)(X) << 12)
@@ -193,8 +196,10 @@ void vmap_setup() {
 
     vmap.pml4_base = pml4_base;
     vmap.lost_mem_stat = 0;
-    vmap.vasp = vmap.va_free_stack;
-    vmap.va_last = KERNEL_HEAP;
+    vmap.vakhsp = vmap.va_kheap_free_stack;
+    vmap.vakssp = vmap.va_kstack_free_stack;
+    vmap.va_kstack_last = KERNEL_STACK;
+    vmap.va_kheap_last = KERNEL_HEAP;
 }
 
 L3E* get_l3e(vaddr* va, PML4E* l4e) {
@@ -203,7 +208,7 @@ L3E* get_l3e(vaddr* va, PML4E* l4e) {
 
     return &(((L3E*)CVRT_ENTRY(l4e->base_addr))[va->pdp_offset]);
 }
-// CONVERT ALL GETS
+
 L2E* get_l2e(vaddr* va, L3E* l3e) {
     if (l3e->p != PRESENT_BIT)
         return NULL;
@@ -226,8 +231,8 @@ void init_vaddr_space() {
     cr3.base_addr = CVRT_VA(vmap.pml4_base);
 
     init_identity_paging(pml4e);
-    init_kstack_paging(++pml4e); // Not complete
-    init_growth_paging(++pml4e); // Not complete
+    init_kstack_paging(++pml4e);
+    init_growth_paging(++pml4e);
     pml4e += NUM_L4_GROWTH_PAGES;
     init_kheap_paging(pml4e);
     init_uspace_paging(++pml4e);
@@ -243,6 +248,36 @@ void MMU_init(void* tag) {
     init_vaddr_space();
 }
 
+vaddr get_kstack_va() {
+    vaddr va;
+
+    if(vmap.vakssp == vmap.va_kstack_free_stack) {
+        va = *(vaddr*)(&vmap.va_kstack_last);
+        vmap.va_kstack_last += PG_SIZE * PGS_PER_STACK;
+    }
+    else {
+        vmap.vakssp--;
+        va = *(vaddr*)vmap.vakssp;
+    }
+
+    return va;
+}
+
+vaddr get_kheap_va() {
+    vaddr va;
+
+    if(vmap.vakhsp == vmap.va_kheap_free_stack) {
+        va = *(vaddr*)(&vmap.va_kheap_last);
+        vmap.va_kheap_last += PG_SIZE;
+    }
+    else {
+        vmap.vakhsp--;
+        va = *(vaddr*)vmap.vakhsp;
+    }
+
+    return va;
+}
+
 void* MMU_alloc_page() {
     union va {
         vaddr va;
@@ -256,14 +291,7 @@ void* MMU_alloc_page() {
     L1E* l1;
 
     // Determines next va
-    if(vmap.vasp == vmap.va_free_stack) {
-        va.va = *(vaddr*)(&vmap.va_last);
-        vmap.va_last += PG_SIZE;
-    }
-    else {
-        vmap.vasp--;
-        va.va = *(vaddr*)vmap.vasp;
-    }
+    va.va = get_kheap_va();
 
     printk("Allocating va %p\n", va.va_p);
 
@@ -272,7 +300,7 @@ void* MMU_alloc_page() {
 
     // Checks for L3 table
     if ((l3 = get_l3e(&va.va, l4)) == NULL) {
-        printk("ERROR: KERNEL HEAP NOT INITIALIZED\n");
+        printk("ERROR: VIRTUAL MEMORY NOT INITIALIZED\n");
         return NULL;
     }
   
@@ -302,6 +330,58 @@ void* MMU_alloc_page() {
     return va.va_p;
 }
 
+void* MMU_alloc_kstack() {
+    union va {
+        vaddr va;
+        void* va_p;
+    } va;
+
+    void *l2_base_addr, *l1_base_addr;
+    int i;
+    PML4E* l4;
+    L3E* l3;
+    L2E* l2;
+    L1E* l1;
+
+    va.va = get_kstack_va();
+
+    // Gets L4 Entry
+    l4 = &vmap.pml4_base[KERNEL_STACK_INDEX];
+
+    // Gets L3 Entry
+    if ((l3 = get_l3e(&va.va, l4)) == NULL) {
+        printk("ERROR: VIRTUAL MEMORY NOT INITIALIZED\n");
+        return NULL;
+    }
+
+    // Gets L2 Entry
+    if ((l2 = get_l2e(&va.va, l3)) == NULL) {
+        l2_base_addr = MMU_pf_alloc();
+        memset((void*)l2_base_addr, 0, PG_SIZE);
+
+        init_l3e(l3, l2_base_addr, !HUGE_BIT, K_SPACE);
+        l2 = &(((L2E*)(l2_base_addr))[va.va.pd_offset]);
+    }
+
+    // Gets L1 Entry
+    if ((l1 = get_l1e(&va.va, l2)) == NULL) {
+        l1_base_addr = MMU_pf_alloc();
+        memset((void*)l1_base_addr, 0, PG_SIZE);
+
+        init_l2e(l2, l1_base_addr, !HUGE_BIT, K_SPACE);
+        l1 = &(((L1E*)(l1_base_addr))[va.va.pt_offset]);
+    }
+
+    for (i = 0; i < PGS_PER_STACK; i++, l1++) {
+        memset((void*)l1, 0, sizeof(L1E));
+
+        l1->rw = 1;
+        l1->avl_lo |= DEMAND_BIT;
+    }
+
+    return va.va_p + ((PGS_PER_STACK - 1) * PG_SIZE);
+}
+
 void MMU_free_page(void* p) {
     vaddr* va = (vaddr*)&p;
     PML4E* l4;
@@ -324,20 +404,53 @@ void MMU_free_page(void* p) {
     if (l1->p == 1) {
         MMU_pf_free((void*)CVRT_ENTRY(l1->base_addr));
         l1->p = 0;
+        l1->avl_lo &= ~DEMAND_BIT;
+    }
+    else if (l1->avl_lo & DEMAND_BIT)
+        l1->avl_lo &= ~DEMAND_BIT;
+    else {
+        printk("ERROR: Unable to free va %p\n", p);
+        return;
     }
 
-    l1->avl_lo &= ~DEMAND_BIT;
-
     // Adds freed va space to free stack
-    if (vmap.vasp == (vmap.va_free_stack + sizeof(vmap.va_free_stack))) {
+    if ((uint64_t)p >= KERNEL_HEAP) {
+        if (vmap.vakhsp == (vmap.va_kheap_free_stack + sizeof(vmap.va_kheap_free_stack))) {
+            vmap.lost_mem_stat++;
+            return;
+        }
+
+        printk("Freed va at %p\n", (void*)*(uint64_t*)va);
+
+        *vmap.vakhsp = *(uint64_t*)va;
+        vmap.vakhsp++;
+    }
+}
+
+void MMU_free_kstack(void* p) {
+    union va {
+        vaddr va;
+        void* va_p;
+    } va;
+
+    int i;
+
+    va.va_p = p;
+
+    for (i = 0; i < PGS_PER_STACK; i++, va.va.pt_offset--) {
+        MMU_free_page(va.va_p);
+        printk("Freed va at %p\n", va.va_p);
+    }
+
+    if (vmap.vakssp == (vmap.va_kstack_free_stack + sizeof(vmap.va_kstack_free_stack))) {
         vmap.lost_mem_stat++;
         return;
     }
 
-    printk("Freed va at %p\n", (void*)*(uint64_t*)va);
+    printk("Freed kstack at %p\n", p);
 
-    *vmap.vasp = *(uint64_t*)va;
-    vmap.vasp++;
+    *vmap.vakssp = (uint64_t)p;
+    vmap.vakssp++;
 }
 
 void pf_error(int err, void* va) {

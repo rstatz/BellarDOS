@@ -119,8 +119,6 @@ global isr111
 global isr112
 global isr113
 global isr114
-global isr115
-global isr116
 global isr117
 global isr118
 global isr119
