@@ -84,7 +84,7 @@ void* MMU_pf_alloc() {
 
     pf = mmap.pgs_free;
 
-    printk("Allocating pf at %p\n", pf);
+//    printk("Allocating pf at %p\n", pf);
 
     mmap.pgs_free = ((pf_header*)mmap.pgs_free)->next;
     mmap.pgs_avl--;
@@ -293,7 +293,7 @@ void* MMU_alloc_page() {
     // Determines next va
     va.va = get_kheap_va();
 
-    printk("Allocating va %p\n", va.va_p);
+//    printk("Allocating va %p\n", va.va_p);
 
     // Gets L4 Entry
     l4 = &vmap.pml4_base[KERNEL_HEAP_INDEX];
@@ -420,7 +420,7 @@ void MMU_free_page(void* p) {
             return;
         }
 
-        printk("Freed va at %p\n", (void*)*(uint64_t*)va);
+//        printk("Freed va at %p\n", (void*)*(uint64_t*)va);
 
         *vmap.vakhsp = *(uint64_t*)va;
         vmap.vakhsp++;
@@ -447,7 +447,7 @@ void MMU_free_kstack(void* p) {
         return;
     }
 
-    printk("Freed kstack at %p\n", p);
+//    printk("Freed kstack at %p\n", p);
 
     *vmap.vakssp = (uint64_t)p;
     vmap.vakssp++;
@@ -480,8 +480,8 @@ void IRQ_pf_handler(int err) {
     vmap.pml4_base = (void*)CVRT_ENTRY(cr3.base_addr);
     l4 = &vmap.pml4_base[va.va.pml4_offset];
    
-    printk("#PF INFO %x:\n\t VA %p\n\tPAGE TABLE %p\n", 
-        err, va.va_p, vmap.pml4_base);
+//    printk("#PF INFO %x:\n\t VA %p\n\tPAGE TABLE %p\n", 
+//        err, va.va_p, vmap.pml4_base);
 
     // Check if invalid address
     if ((!l4->p)

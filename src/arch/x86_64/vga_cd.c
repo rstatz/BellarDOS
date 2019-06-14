@@ -6,14 +6,17 @@
 #include "irq.h"
 #include "debug.h"
 
+#define VGA_DEFAULT_WIDTH 80
+#define VGA_DEFAULT_HEIGHT 25
+
 #define VGA_BASE 0xb8000
 
 #define VGA_ENTRY(H, C) ((H << 8) | C)
 
 #define ASCII_BS 0x08
 
-static int width = 80;
-static int height = 25;
+static int width = VGA_DEFAULT_WIDTH;
+static int height = VGA_DEFAULT_HEIGHT;
 
 static int cursor = 0;
 static unsigned char color = 0;
@@ -99,5 +102,21 @@ void VGA_display_str(unsigned char* str) {
         VGA_display_char(*p);
         p++;
     }
+}
+
+int VGA_row_count() {
+    return height;
+}
+
+int VGA_col_count() {
+    return width;
+}
+
+void VGA_dislay_attr_char(int x, int y, char c, int fg, int bg) {
+    VGA_set_color(fg, bg);
+
+    cursor = (y * width) + x;
+
+    VGA_display_char((unsigned char) c);
 }
 

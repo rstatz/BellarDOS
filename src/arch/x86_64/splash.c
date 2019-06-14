@@ -32,14 +32,14 @@ void splash() {
                          \"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\n\
                                    v0.0.0.1\n";
 
-    VGA_init(VGA_COLOR_WHITE, VGA_COLOR_WHITE);
-    VGA_set_color(VGA_COLOR_BLACK, VGA_COLOR_WHITE);
+    VGA_init(VGA_WHITE, VGA_WHITE);
+    VGA_set_color(VGA_BLACK, VGA_WHITE);
     //VGA_clear();
     VGA_display_str((unsigned char*)img);
 }
 
 void splash_end() {
-    VGA_set_color(VGA_COLOR_CYAN, VGA_COLOR_BROWN);
+    VGA_set_color(VGA_CYAN, VGA_ORANGE);
     VGA_clear();
 
     printk(WELCOME);

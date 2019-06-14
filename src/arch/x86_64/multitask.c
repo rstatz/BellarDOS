@@ -8,10 +8,12 @@
 #define RFLAGS 0x2
 #define CODE_SEGMENT 0x8
 
-Proc *head;
-Proc *curr_proc, *next_proc;
+Process *head;
+Process *curr_proc, *next_proc;
 
 void* dead_kstack;
+
+int pid_g;
 
 void PROC_run() {
 //    BREAK; 
@@ -23,12 +25,13 @@ void PROC_reschedule() {
     next_proc = (curr_proc->next == NULL) ? head : curr_proc->next;
 }
 
-void PROC_create_kthread(kproc_t entry, void* arg) {
-    Proc* p = (Proc*)kmalloc(sizeof(Proc));
-    memset((void*)p, 0, sizeof(Proc));
+Process* PROC_create_kthread(kproc_t entry, void* arg) {
+    Process* p = (Process*)kmalloc(sizeof(Process));
+    memset((void*)p, 0, sizeof(Process));
 
     p->regs.rip = (uint64_t)(void*)entry;
     p->regs.rdi = (uint64_t)arg;
+    p->pid = pid_g++;
 
     if (curr_proc == NULL) {
         curr_proc = p;
@@ -48,6 +51,8 @@ void PROC_create_kthread(kproc_t entry, void* arg) {
         head->prev = p;
         head = p;
     }
+
+    return p;
 }
 
 void PROC_init() {
@@ -55,6 +60,7 @@ void PROC_init() {
     curr_proc = NULL;
     next_proc = NULL;
     dead_kstack = NULL;
+    pid_g = 0;
 
     PROC_create_kthread(NULL, NULL);
 }
@@ -68,7 +74,7 @@ void PROC_yield(uint64_t rsp) {
 }
 
 void PROC_exit(uint64_t rsp) {
-    Proc* dead_proc = curr_proc;
+    Process* dead_proc = curr_proc;
 
     // Frees old stack
     if (dead_kstack != NULL)

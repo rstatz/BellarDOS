@@ -17,20 +17,20 @@ typedef struct Proc_regs {
     uint64_t rip, cs, rflags, rsp, ss;
 } __attribute__((packed)) Proc_regs;
 
-typedef struct Proc {
+typedef struct Process {
     Proc_regs regs;
 
     void* kstack;
-    uint32_t pid;
-    struct Proc *next, *prev;
-} Proc;
+    int pid;
+    struct Process *next, *prev;
+} Process;
 
 void PROC_init();
 
 void PROC_run();
 
 typedef void (*kproc_t)(void*);
-void PROC_create_kthread(kproc_t entry_point, void* arg);
+Process* PROC_create_kthread(kproc_t entry_point, void* arg);
 
 void PROC_reschedule();
 

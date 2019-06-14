@@ -60,7 +60,7 @@ void interrupt_handler_err(int irq, int err) {
             printk("General Protection Fault: Error Code %d\n", err);
             break;
         case(IRQ_PF) :
-            printk("Page Fault: Error Code %d\n", err); 
+//            printk("Page Fault: Error Code %d\n", err); 
             IRQ_pf_handler(err);
            break;
         default:

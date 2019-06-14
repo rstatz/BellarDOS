@@ -27,7 +27,7 @@ km_pool pool;
 void kmalloc_init() {
     km_footer* f;
 
-    printk("Initializing kmalloc...\n");
+//    printk("Initializing kmalloc...\n");
 
     pool.flist = (km_header*)MMU_alloc_page();
     pool.brk = (void*)((char*)pool.flist + PG_SIZE);
@@ -44,7 +44,7 @@ km_header* extend_pool(km_header* h) {
     km_footer* f;
     void* next = MMU_alloc_page();
 
-    printk("Extending KHeap...\n");
+//    printk("Extending KHeap...\n");
 
     if (next != pool.brk) {
         printk("Memory not contiguous, shit don't work yo\n");
@@ -82,7 +82,7 @@ km_header* reduce_block_size(km_header* h, size_t tsize) {
     km_header *hnew;
     km_footer *f, *fnew, *ftemp;
 
-    printk("Reducing block...\n");
+//    printk("Reducing block...\n");
 
     f = CALC_FOOT(h);
     f->size = f->size - tsize;
@@ -175,8 +175,6 @@ void add_free(km_header* h) {
 void* kmalloc(size_t size) {
     km_header *h;
     size_t tsize;
-
-//    BREAK;
     
     if (size > MAX_SUPPORTED_SIZE)
         return NULL;
@@ -209,8 +207,6 @@ km_header* merge_blocks(km_header* htop, km_header* hbot) {
 void kfree(void* mem) {
     km_header *h, *htemp;
     km_footer *f, *ftemp;
-
-//    BREAK;
 
     h = ((km_header*)mem) - 1;
 
