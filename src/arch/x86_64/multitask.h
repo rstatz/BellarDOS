@@ -15,8 +15,13 @@ typedef struct Process {
 
     void* kstack;
     int pid;
+    
     struct Process *next, *prev;
 } Process;
+
+typedef struct Proc_q {
+    Process* head;
+} Proc_q;
 
 void PROC_init();
 
@@ -30,6 +35,14 @@ void PROC_reschedule();
 void PROC_yield(uint64_t);
 
 void PROC_exit(uint64_t);
+
+void PROC_init_q(Proc_q*);
+
+void PROC_unblock_head(Proc_q*);
+
+void PROC_unblock_all(Proc_q*);
+
+void PROC_block_on(Proc_q*, int);
 
 static inline void yield() {
     asm volatile("INT $116");

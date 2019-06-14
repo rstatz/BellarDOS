@@ -2,6 +2,8 @@
 #include "print.h"
 #include "io.h"
 #include "pic_cd.h"
+#include "irq.h"
+#include "multitask.h"
 
 // Ports
 #define PS2_CMD_REG 0x64
@@ -65,6 +67,8 @@ static uint8_t sc_s1_shift[256] = {0, 0, '!', '@', '#', '$', '%', '^', '&', '*',
 static uint8_t sc_s1_shift_caps[256] = {0, 0, '!', '@', '#', '$', '%', '^', '&', '*', '(', ')', '_', '+', ASCII_BS, '\t', 'q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p', '{', '}', '\n', 0, 'a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l', ':', '\"', '~', 0, '|', 'z', 'x', 'c', 'v', 'b', 'n', 'm', '<', '>', '?', 0, '*', 0, ' ', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 /*numlock*/, 0, '7', '8', '9', '-', '4', '5', '6', '+', '1', '2', '3', '0', '.', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 
 static uint8_t* charset = sc_s1;
+
+KBD_q kbd;
 
 void ps2_poll_write(uint8_t c) {
     while (inb(PS2_CMD_REG) & ISTATUS_MASK);
@@ -217,6 +221,14 @@ void ps2_set_scancode() {
         //printk("Error: Scan code not set\n");
 }
 
+void init_kbd_buf() {
+    kbd.write = kbd.buf;
+    kbd.read = kbd.buf;
+    kbd.tail = kbd.buf + DEFAULT_KBD_BUF_SIZE;
+
+    PROC_init_q(&kbd.blocked);
+}
+
 void ps2_keyboard_init() {
     // Reset keyboard
     ps2_poll_keyboard_reset();
@@ -228,6 +240,8 @@ void ps2_keyboard_init() {
     ps2_poll_write_dev(ENABLE_KEYBOARD);
     //if (ps2_ack())
     //    printk("ps2: Keyboard Enabled\n");
+
+    init_kbd_buf();
 }
 
 void ps2_self_test() {
@@ -276,8 +290,22 @@ void ps2_init() {
     //ps2_poll_write(ENABLE_PORT2);
 }
 
+void KBD_read() {
+    CLI;
+
+    while(kbd.read == kbd.write) {
+        PROC_block_on(&kbd.blocked, 1);
+        CLI;
+    }
+
+    STI;
+}
+
 void IRQ_keyboard_handler() {
     uint8_t c;
+
+//    if (kbd.write != kbd.tail)
+//        (kbd.write++) = ps2_poll_read();
 
     c = ps2_poll_read();
     ps2_read_keyboard(c);

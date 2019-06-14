@@ -62,7 +62,7 @@ void kmain(void* mb_tag) {
 
     // Snakes
     VGA_set_color(VGA_BLACK, VGA_BLACK);
-    setup_snakes(0);
+    setup_snakes(1);
 
 //    BREAK;
 
