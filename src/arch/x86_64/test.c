@@ -114,7 +114,7 @@ void printproc() {
 
     printk("\nKilling Process...\n");
 
-    exit();
+    kexit();
 }
 
 void test_multitask() {

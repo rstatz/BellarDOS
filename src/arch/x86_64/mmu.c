@@ -439,7 +439,7 @@ void MMU_free_kstack(void* p) {
 
     for (i = 0; i < PGS_PER_STACK; i++, va.va.pt_offset--) {
         MMU_free_page(va.va_p);
-        printk("Freed va at %p\n", va.va_p);
+//        printk("Freed va at %p\n", va.va_p);
     }
 
     if (vmap.vakssp == (vmap.va_kstack_free_stack + sizeof(vmap.va_kstack_free_stack))) {

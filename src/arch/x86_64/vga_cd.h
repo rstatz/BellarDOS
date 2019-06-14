@@ -37,6 +37,6 @@ void VGA_display_str(unsigned char*);
 int VGA_row_count();
 int VGA_col_count();
 void VGA_clear();
-void VGA_dislay_attr_char(int, int, char, int, int);
+void VGA_display_attr_char(int, int, char, int, int);
 
 #endif

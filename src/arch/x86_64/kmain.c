@@ -1,4 +1,5 @@
 #include "strings.h"
+#include "time.h"
 
 #include "gdt.h"
 #include "idt.h"
@@ -17,19 +18,13 @@
 #include "irq.h"
 
 #include "splash.h"
+#include "snakes.h"
 
 #include "test.h"
 #include "debug.h"
 
 #define PULSE_DELAY 100000000
 #define SPLASH_DELAY 200000000
-
-void delay_cycles(unsigned int i) {
-    unsigned int c = 0;
-
-    while (c != i)
-        c++;
-}
 
 void kmain(void* mb_tag) {
     CLI; 
@@ -63,7 +58,11 @@ void kmain(void* mb_tag) {
 
     // Splash End
     delay_cycles(SPLASH_DELAY);
-    splash_end();
+//    splash_end();
+
+    // Snakes
+    VGA_set_color(VGA_BLACK, VGA_BLACK);
+    setup_snakes(0);
 
 //    BREAK;
 
@@ -74,7 +73,6 @@ void kmain(void* mb_tag) {
 
     while(1) {
         PROC_run();
-        asm("hlt");
+//        asm("hlt");
     }
-
 }

@@ -9,7 +9,7 @@
 #define CODE_SEGMENT 0x8
 
 Process *head;
-Process *curr_proc, *next_proc;
+Process *next_proc;
 
 void* dead_kstack;
 

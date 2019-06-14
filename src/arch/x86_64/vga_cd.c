@@ -112,7 +112,7 @@ int VGA_col_count() {
     return width;
 }
 
-void VGA_dislay_attr_char(int x, int y, char c, int fg, int bg) {
+void VGA_display_attr_char(int x, int y, char c, int fg, int bg) {
     VGA_set_color(fg, bg);
 
     cursor = (y * width) + x;
